@@ -1,9 +1,11 @@
-# [<img src="https://s3.internetdata.io/internetdata-public/brand/mark.svg" alt="InternetData" width="24"/>](https://internetdata.io/) mmdb
+# [<img src="https://s3.internetdata.io/internetdata-public/brand/mark.svg" alt="InternetData" height="28"/>](https://internetdata.io/) mmdb
 
 [![release](https://img.shields.io/github/v/release/internetdata/mmdb)](https://github.com/internetdata/mmdb/releases)
 [![license](https://img.shields.io/github/license/internetdata/mmdb)](LICENSE)
 
-`mmdb` is a command line tool for MMDB files:
+A free command line utility for MMDB files, maintained by [InternetData](https://internetdata.io). It works with any MMDB file, whoever built it, and needs no account or API key.
+
+With it you can:
 
 - Read data for IPs in an MMDB file.
 - Import data in non-MMDB format into MMDB.
@@ -331,3 +333,17 @@ You can disable this by running the following:
 ```cmd
 REG DELETE HKCU\CONSOLE /f /v VirtualTerminalLevel
 ```
+
+## Other Tools
+
+To download InternetData's own databases, MMDB included, use the [InternetData CLI](https://github.com/internetdata/cli) or one of our client libraries for PHP, Python, Go, Java, Ruby and more. See our GitHub at https://github.com/internetdata for all of them.
+
+## About InternetData
+
+IP, ASN and Domain data to reveal unique insights about the internet. APIs, Databases and Live Feeds available.
+
+[<img src="https://s3.internetdata.io/internetdata-public/brand/mark.svg" alt="InternetData" width="96"/>](https://internetdata.io/)
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
