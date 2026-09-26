@@ -193,8 +193,8 @@ $ cat data.tsv | mmdb import --ip 4 --tsv --out data.mmdb
 $ mmdb import --no-network --in data.csv --out data.mmdb
 
 # generate an MMDB without any fields, just IP ranges that meet a criteria.
-$ mmdb import                                                              \
-    --size 24 --no-fields --ip 4                                              \
+$ mmdb import \
+    --size 24 --no-fields --ip 4 \
     --in anycast.csv --out anycast.mmdb
 ```
 
