@@ -1,4 +1,4 @@
-# [<img src="https://s3.internetdata.io/internetdata-public/brand/mark.svg" alt="InternetData" height="28"/>](https://internetdata.io/) mmdb
+# [<img src="https://s3.internetdata.io/internetdata-public/brand/mark.svg" alt="InternetData" height="28"/>](https://internetdata.io/) InternetData `mmdb`
 
 [![release](https://img.shields.io/github/v/release/internetdata/mmdb)](https://github.com/internetdata/mmdb/releases)
 [![license](https://img.shields.io/github/license/internetdata/mmdb)](LICENSE)
