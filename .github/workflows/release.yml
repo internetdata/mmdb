@@ -170,7 +170,7 @@ jobs:
       - if: steps.guard.outputs.configured == 'true'
         uses: vedantmgoyal9/winget-releaser@v2
         with:
-          identifier: Mslm.Mmdb
+          identifier: InternetData.Mmdb
           installers-regex: '_windows_\w+\.zip$'
           version: ${{ needs.version.outputs.version }}
           token: ${{ secrets.WINGET_TOKEN }}
