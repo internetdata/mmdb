@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>mmdb</id>
+    <version>0.0.0</version>
+    <packageSourceUrl>https://github.com/internetdata/mmdb</packageSourceUrl>
+    <owners>Mslm Dev</owners>
+    <title>mmdb</title>
+    <authors>Mslm Dev</authors>
+    <projectUrl>https://github.com/internetdata/mmdb</projectUrl>
+    <iconUrl>https://s3.internetdata.io/internetdata-public/brand/mark.svg</iconUrl>
+    <copyright>Copyright (C) 2025-now InternetData</copyright>
+    <licenseUrl>https://github.com/internetdata/mmdb/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/internetdata/mmdb</projectSourceUrl>
+    <docsUrl>https://github.com/internetdata/mmdb#readme</docsUrl>
+    <bugTrackerUrl>https://github.com/internetdata/mmdb/issues</bugTrackerUrl>
+    <tags>mmdb maxmind ip database networking cli</tags>
+    <summary>Read, import, export, diff and verify MMDB files</summary>
+    <description>
+Read the data for IPs, CIDRs and ranges from an MMDB file, build one from CSV,
+TSV or JSON, export one back to those formats, see the difference between two,
+print a file's metadata, and check that one is well formed.
+    </description>
+    <releaseNotes>https://github.com/internetdata/mmdb/releases/tag/v@VSN@</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

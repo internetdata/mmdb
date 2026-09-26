@@ -1,0 +1,13 @@
+# Build output.
+/build/
+/dist/usr/
+
+# Go workspace files, which are local to a checkout.
+go.work
+go.work.sum
+
+# Editors and OS noise.
+*~
+.DS_Store
+.idea/
+.vscode/

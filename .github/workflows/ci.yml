@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    # A tag is what publishes, so running CI on it cannot block a bad release -
+    # but it turns one into a red run and an email rather than silence.
+    tags: ['v*']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 1.27 is both the go.mod floor, which mmdbwriter v2 sets, and what the
+        # release and the Dockerfile build with. govulncheck runs on it because
+        # every binary ships that Go's standard library.
+        go: ['1.27']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ matrix.go }}
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ] ; then
+            echo "gofmt needed on:" >&2
+            echo "$unformatted" >&2
+            exit 1
+          fi
+      - run: go vet ./...
+      - run: go test -race ./...
+      # GOTOOLCHAIN=auto for the install alone: setup-go exports local, and
+      # govulncheck may need a newer Go to build than the one it scans with.
+      - name: govulncheck
+        if: matrix.go == '1.27'
+        run: |
+          GOTOOLCHAIN=auto go install golang.org/x/vuln/cmd/govulncheck@latest
+          # Each GOOS build-all-platforms.sh ships: a scan reads only that GOOS's files.
+          for goos in darwin dragonfly freebsd linux netbsd openbsd solaris windows ; do
+            echo "govulncheck GOOS=${goos}"
+            GOOS="$goos" govulncheck ./...
+          done
+
+  # The release builds every target from one machine, so a cross-compilation
+  # failure has to surface before the tag rather than during it.
+  cross:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+      - run: ./scripts/build-all-platforms.sh 0.0.0-ci

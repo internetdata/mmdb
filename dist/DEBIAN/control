@@ -1,0 +1,11 @@
+Package: mmdb
+Version: 0.0.0
+Section: net
+Priority: optional
+Architecture: amd64
+Maintainer: Mslm Dev <support@internetdata.io>
+Homepage: https://github.com/internetdata/mmdb
+Description: Read, import, export, diff and verify MMDB files
+ Read the data for IPs, CIDRs and ranges from an MMDB file, build one from
+ CSV, TSV or JSON, export one back to those formats, see the difference
+ between two, print a file's metadata, and check that one is well formed.
