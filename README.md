@@ -14,7 +14,54 @@
 
 ## Getting Started
 
-### Linux and macOS
+### macOS
+
+```bash
+brew trust internetdata/tap
+brew tap internetdata/tap
+brew install mmdb
+```
+
+Homebrew won't load a formula from a third-party tap until you trust it. Skip that first line and it fails with `invalid syntax in tap!`, which is misleading: the formula is fine. `brew trust` arrived in Homebrew 7, so run `brew update` first if it comes back as an unknown command. The same three lines work with Homebrew on Linux.
+
+`mmdb` needs macOS 13 Ventura or later.
+
+### Debian / Ubuntu
+
+Install from our apt repository, which keeps `mmdb` up to date with `apt upgrade`:
+
+```bash
+echo "deb [trusted=yes] https://apt.internetdata.io/mmdb/ /" | sudo tee /etc/apt/sources.list.d/mmdb.list
+sudo apt update && sudo apt install mmdb
+```
+
+Or install a single `.deb` without the repository:
+
+```bash
+curl -Ls https://github.com/internetdata/mmdb/releases/latest/download/deb.sh | sh
+```
+
+### Windows
+
+Install for the current user, which needs no admin rights:
+
+```powershell
+iwr -useb https://github.com/internetdata/mmdb/releases/latest/download/windows.ps1 | iex
+```
+
+### Docker
+
+```bash
+docker run --rm -v "$PWD:/data" -w /data ghcr.io/internetdata/mmdb metadata location.mmdb
+```
+
+### Using `go install`
+
+```bash
+go install github.com/internetdata/mmdb@latest
+```
+
+### Using `curl` / `wget`
 
 Binaries are published for 23 platform and architecture pairs on the [releases page](https://github.com/internetdata/mmdb/releases). Pick yours:
 
@@ -31,35 +78,7 @@ macOS has a one-line installer that picks the right architecture for you:
 curl -Ls https://github.com/internetdata/mmdb/releases/latest/download/macos.sh | sh
 ```
 
-`mmdb` needs macOS 13 Ventura or later.
-
-On Debian or Ubuntu, install a single `.deb`:
-
-```bash
-curl -Ls https://github.com/internetdata/mmdb/releases/latest/download/deb.sh | sh
-```
-
-### Windows
-
-Install for the current user, which needs no admin rights:
-
-```powershell
-iwr -useb https://github.com/internetdata/mmdb/releases/latest/download/windows.ps1 | iex
-```
-
-The binaries are not code-signed, so macOS Gatekeeper will ask before running one the first time, and Windows SmartScreen may warn.
-
-### Docker
-
-```bash
-docker run --rm -v "$PWD:/data" -w /data ghcr.io/internetdata/mmdb metadata location.mmdb
-```
-
-### Using `go install`
-
-```bash
-go install github.com/internetdata/mmdb@latest
-```
+Note that the binaries are not code-signed, so macOS Gatekeeper will ask before running one the first time, and Windows SmartScreen may warn.
 
 ### From source
 
