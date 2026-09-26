@@ -342,7 +342,7 @@ To download InternetData's own databases, MMDB included, use the [InternetData C
 
 IP, ASN and Domain data to reveal unique insights about the internet. APIs, Databases and Live Feeds available.
 
-[<img src="https://s3.internetdata.io/internetdata-public/brand/mark.svg" alt="InternetData" width="96"/>](https://internetdata.io/)
+[<img src="https://s3.internetdata.io/internetdata-public/brand/mark.svg" alt="InternetData" height="64"/>](https://internetdata.io/)
 
 ## License
 
