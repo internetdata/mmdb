@@ -9,7 +9,7 @@ require (
 	github.com/mslmio/libgo-complete v1.0.1
 	github.com/mslmio/libgo-iputil v1.0.0
 	github.com/oschwald/maxminddb-golang/v2 v2.6.0
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.10
 )
 
 require (
