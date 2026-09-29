@@ -45,7 +45,11 @@ curl -Ls https://github.com/internetdata/mmdb/releases/latest/download/deb.sh | 
 
 ### Windows
 
-Install for the current user, which needs no admin rights:
+```powershell
+choco install mmdb
+```
+
+Or install for the current user, which needs no admin rights:
 
 ```powershell
 iwr -useb https://github.com/internetdata/mmdb/releases/latest/download/windows.ps1 | iex
