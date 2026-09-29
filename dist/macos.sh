@@ -6,7 +6,7 @@
 
 set -e
 
-VSN="${VSN:-1.0.0}"
+VSN="${VSN:-1.0.1}"
 
 # Go 1.27 builds the release and needs macOS 13 Ventura.
 os="$(sw_vers -productVersion 2>/dev/null || true)"
