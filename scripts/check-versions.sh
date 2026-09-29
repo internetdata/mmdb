@@ -9,6 +9,9 @@
 # download URL built from their own default, so a stale one keeps serving the
 # PREVIOUS release forever, and it works - which is why nobody notices.
 #
+# It also refuses a version with no CHANGELOG.md section of its own, which
+# release.yml publishes as the tag's GitHub Release; see check_changelog.
+#
 # Deliberately NOT checked. Each is a template a build step substitutes, and a
 # gate that flags a template is a gate someone switches off:
 #   dist/DEBIAN/control            Version: 0.0.0   <- scripts/build-archive-all.sh
@@ -45,6 +48,69 @@ function declared_in() {
     esac | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | sort -u
 }
 
+# Refuses a CHANGELOG.md that does not say what this version changed for the
+# user. release.yml cuts the section out with the same awk and publishes it as
+# the tag's GitHub Release, so a section this cannot find is a release with no
+# notes. A section is `## <version> - <date>`, holding only Breaking changes,
+# Features and Fixes, in that order, none of them empty, and every line under
+# them links the commit that made the change.
+function check_changelog() {
+    local want="$1" section line heading="" items=0 last=-1 idx i sha rc=0
+    local -a order=("Breaking changes" "Features" "Fixes")
+    if [ ! -f CHANGELOG.md ] ; then
+        echo "  FAIL CHANGELOG.md: missing, so ${want} would go out with no release notes" >&2
+        return 1
+    fi
+    section="$(awk -v v="$want" '/^## /{ if (found) exit; found = ($2 == v); next } found' CHANGELOG.md)"
+    if ! grep -qE "^## ${want//./\\.} - [0-9]{4}-[0-9]{2}-[0-9]{2}\$" CHANGELOG.md \
+        || ! grep -q '^### ' <<< "$section" ; then
+        echo "  FAIL CHANGELOG.md: no '## ${want} - <YYYY-MM-DD>' section with a heading under it" >&2
+        return 1
+    fi
+    while IFS= read -r line ; do
+        case "$line" in
+            '### '*)
+                if [ -n "$heading" ] && [ "$items" -eq 0 ] ; then
+                    echo "  FAIL CHANGELOG.md: ${want} has an empty '${heading}'; drop the heading" >&2
+                    rc=1
+                fi
+                heading="${line#\#\#\# }"
+                items=0
+                idx=-1
+                for i in "${!order[@]}" ; do
+                    [ "${order[$i]}" = "$heading" ] && idx="$i"
+                done
+                if [ "$idx" -lt 0 ] ; then
+                    echo "  FAIL CHANGELOG.md: ${want} has a '${heading}' heading" >&2
+                    echo "       the headings are Breaking changes, Features and Fixes" >&2
+                    rc=1
+                elif [ "$idx" -le "$last" ] ; then
+                    echo "  FAIL CHANGELOG.md: ${want} has '${heading}' out of order" >&2
+                    echo "       the order is Breaking changes, Features, Fixes" >&2
+                    rc=1
+                fi
+                last="$idx"
+                ;;
+            '- '*)
+                items=$((items + 1))
+                sha="$(grep -oE '/commit/[0-9a-f]{40}' <<< "$line" | head -1 | cut -d/ -f3)"
+                if [ -z "$sha" ] ; then
+                    echo "  FAIL CHANGELOG.md: ${want} has a line that links no commit: ${line}" >&2
+                    rc=1
+                elif ! git merge-base --is-ancestor "$sha" HEAD 2>/dev/null ; then
+                    echo "  FAIL CHANGELOG.md: ${want} links ${sha:0:7}, which is not in this history" >&2
+                    rc=1
+                fi
+                ;;
+        esac
+    done <<< "$section"
+    if [ -n "$heading" ] && [ "$items" -eq 0 ] ; then
+        echo "  FAIL CHANGELOG.md: ${want} has an empty '${heading}'; drop the heading" >&2
+        rc=1
+    fi
+    return "$rc"
+}
+
 rc=0
 
 for f in $REQUIRED ; do
@@ -79,8 +145,10 @@ for v in $(declared_in README.md) ; do
     fi
 done
 
+check_changelog "$WANT" || rc=1
+
 if [ "$rc" -ne 0 ] ; then
-    echo "==> FAILED - bump every version string, then re-tag" >&2
+    echo "==> FAILED - fix every line above, then re-tag" >&2
     exit 1
 fi
-echo "==> versions agree on ${WANT}"
+echo "==> versions agree on ${WANT}, and CHANGELOG.md has its section"

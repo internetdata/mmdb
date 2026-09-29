@@ -40,6 +40,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag || github.ref }}
+          # check-versions.sh confirms each CHANGELOG.md line links a commit in
+          # this tag's history, which a shallow clone does not have.
+          fetch-depth: 0
       - name: Check the tag against the version in main.go
         id: vsn
         run: |
@@ -81,6 +84,18 @@ jobs:
           sed -i "s/else { \"[0-9.]*\" }/else { \"${vsn}\" }/" dist/windows.ps1
           cp dist/macos.sh dist/deb.sh dist/windows.ps1 build/
 
+      # The release's notes are this version's CHANGELOG.md section, which
+      # check-versions.sh already required in the version job.
+      - name: Cut this version's CHANGELOG.md section
+        run: |
+          vsn="${{ needs.version.outputs.version }}"
+          notes="$RUNNER_TEMP/notes.md"
+          awk -v v="$vsn" '/^## /{ if (found) exit; found = ($2 == v); next } found' CHANGELOG.md > "$notes"
+          if ! grep -q '^### ' "$notes" ; then
+            echo "CHANGELOG.md has no section for ${vsn}" >&2
+            exit 1
+          fi
+
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.version.outputs.tag }}
@@ -91,7 +106,7 @@ jobs:
             build/macos.sh
             build/deb.sh
             build/windows.ps1
-          generate_release_notes: true
+          body_path: ${{ runner.temp }}/notes.md
 
   docker:
     needs: version
