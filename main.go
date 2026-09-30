@@ -47,6 +47,8 @@ func main() {
 		err = cmdVerify()
 	case cmd == "metadata":
 		err = cmdMetadata()
+	case cmd == "compress":
+		err = cmdCompress()
 	case cmd == "completion":
 		err = cmdCompletion()
 	case cmd == "version":
