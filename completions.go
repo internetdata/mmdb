@@ -15,6 +15,7 @@ var completions = &complete.Command{
 		"diff":       completionsDiff,
 		"metadata":   completionsMetadata,
 		"verify":     completionsVerify,
+		"compress":   completionsCompress,
 		"completion": completionsCompletion,
 		"version":    {},
 	},

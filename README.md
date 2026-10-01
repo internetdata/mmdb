@@ -279,6 +279,19 @@ $ mmdb verify location-tmp.mmdb
 invalid: received decoding error (the MaxMind DB file's data section contains bad data (uint16 size of 11)) at offset of 13825601
 ```
 
+### Compressing
+
+`compress` is only for legacy MMDB files: ones written without v2 of the Go
+[`mmdbwriter`](https://github.com/maxmind/mmdbwriter), which `mmdb` is built on.
+It stores each identical part of the search tree once, so the file shrinks and
+every lookup answers as before. A file `mmdb import` writes never needs it, and
+`compress` refuses a file that is compressed already.
+
+```bash
+$ mmdb compress legacy.mmdb compressed.mmdb
+wrote compressed.mmdb: 8340464 -> 3083648 bytes (-63.0%)
+```
+
 ## Auto-Completion
 
 Auto-completion is supported for at least the following shells:
