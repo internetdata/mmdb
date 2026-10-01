@@ -22,16 +22,13 @@ func printHelpCompress() {
 	fmt.Printf(
 		`Usage: %s compress [<opts>] <mmdb_file> <out_mmdb_file>
 
-Rewrites an mmdb file so each identical part of its search tree is stored once.
-Every lookup answers as before; only the file gets smaller.
-
-A file that already shares those parts, like every one %[1]s import writes,
-can't shrink: compress reads just its tree, says it is already compressed and
-writes nothing. Otherwise it loads the whole file, taking about as much memory
-as importing it.
+Only for legacy mmdb files: ones written without v2 of the Go mmdbwriter, which
+%[1]s is built on. compress stores each identical part of the search tree once,
+so the file shrinks and every lookup answers as before. A file %[1]s import
+writes never needs it, and compress refuses a file that is compressed already.
 
 Example:
-  $ %[1]s compress data.mmdb data.small.mmdb
+  $ %[1]s compress legacy.mmdb compressed.mmdb
 
 Options:
   General:

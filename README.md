@@ -13,7 +13,6 @@ With it you can:
 - See the difference between two MMDB files.
 - Print the metadata of an MMDB file.
 - Check that an MMDB file is not corrupted or invalid.
-- Shrink an MMDB file without changing any of its answers.
 
 ## Getting Started
 
@@ -282,25 +281,16 @@ invalid: received decoding error (the MaxMind DB file's data section contains ba
 
 ### Compressing
 
-`compress` rewrites an MMDB file so each identical part of its search tree is
-stored once. Every lookup answers exactly as before and the file keeps its type,
-description and build time; it just gets smaller, by 63% on a public country
-database and 32% on a city one.
+`compress` is only for legacy MMDB files: ones written without v2 of the Go
+[`mmdbwriter`](https://github.com/maxmind/mmdbwriter), which `mmdb` is built on.
+It stores each identical part of the search tree once, so the file shrinks and
+every lookup answers as before. A file `mmdb import` writes never needs it, and
+`compress` refuses a file that is compressed already.
 
 ```bash
-$ mmdb compress country.mmdb country.small.mmdb
-wrote country.small.mmdb: 8340464 -> 3083648 bytes (-63.0%)
+$ mmdb compress legacy.mmdb compressed.mmdb
+wrote compressed.mmdb: 8340464 -> 3083648 bytes (-63.0%)
 ```
-
-A file that already shares those parts, like every one `mmdb import` writes,
-can't shrink, so `compress` refuses it after reading just the tree:
-
-```bash
-$ mmdb compress country.small.mmdb again.mmdb
-err: country.small.mmdb is already compressed, so nothing was written
-```
-
-It loads the whole file, so it needs about as much memory as importing it.
 
 ## Auto-Completion
 

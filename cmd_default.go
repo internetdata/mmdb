@@ -20,7 +20,7 @@ Commands:
   diff        see the difference between two mmdb files.
   metadata    print metadata from the mmdb file.
   verify      check that the mmdb file is not corrupted or invalid.
-  compress    shrink an mmdb file without changing any of its answers.
+  compress    shrink a legacy mmdb file, one not written by mmdbwriter v2.
   completion  install or output shell auto-completion script.
   version     show the current version.
 
