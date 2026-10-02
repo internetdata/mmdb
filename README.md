@@ -357,7 +357,7 @@ To download InternetData's own databases, MMDB included, use the [InternetData C
 
 ## About InternetData
 
-IP, ASN and Domain data to reveal unique insights about the internet. APIs, Databases and Live Feeds available.
+Geolocation, anonymity, ownership and network databases for IP addresses and AS numbers, licensed as files you download and query yourself.
 
 [<img src="https://s3.internetdata.io/internetdata-public/brand/mark.svg" alt="InternetData" height="64"/>](https://internetdata.io/)
 
