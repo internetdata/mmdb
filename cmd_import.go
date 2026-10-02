@@ -47,6 +47,7 @@ var completionsImport = &complete.Command{
 		"--disallow-reserved":         predict.Nothing,
 		"--alias-6to4":                predict.Nothing,
 		"--disable-metadata-pointers": predict.Nothing,
+		"--dry-run":                   predict.Nothing,
 	},
 }
 
@@ -58,10 +59,18 @@ Example:
   # Imports an input file and outputs an mmdb file with default configurations.
   $ %[1]s import input.csv output.mmdb
 
+  # Sizes that build without running it, and writes nothing.
+  $ %[1]s import --dry-run input.csv output.mmdb
+
 Options:
   General:
     --help, -h
       show help.
+    --dry-run
+      read the whole input and, writing nothing, print how many nodes the
+      tree would have at most, the size of its records, which record sizes
+      fit, and about how much memory the build would need.
+      default: false.
 
   Input/Output:
     -i <fname>, --in <fname>
