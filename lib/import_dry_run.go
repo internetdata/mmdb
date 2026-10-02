@@ -156,7 +156,7 @@ func (d *dryRun) recordID(value mmdbtype.DataType) (uint32, error) {
 	if id, ok := d.ids[key]; ok {
 		return id, nil
 	}
-	if len(d.ids) == 1<<32-1 {
+	if uint64(len(d.ids)) == 1<<32-1 {
 		return 0, errors.New("more distinct records than any mmdb file can hold")
 	}
 	id := uint32(len(d.ids))
