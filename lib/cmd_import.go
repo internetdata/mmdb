@@ -43,6 +43,7 @@ type CmdImportFlags struct {
 	DisallowReserved    bool
 	Alias6to4           bool
 	DisableMetadataPtrs bool
+	DryRun              bool
 }
 
 var CmdImportFlagsDefaults = CmdImportFlags{
@@ -65,6 +66,7 @@ var CmdImportFlagsDefaults = CmdImportFlags{
 	DisallowReserved:    false,
 	Alias6to4:           false,
 	DisableMetadataPtrs: true,
+	DryRun:              false,
 }
 
 // Init initializes the common flags available to CmdImport with sensible
@@ -168,7 +170,11 @@ func (f *CmdImportFlags) Init() {
 		"disable-metadata-pointers", CmdImportFlagsDefaults.DisableMetadataPtrs,
 		_h,
 	)
-
+	pflag.BoolVar(
+		&f.DryRun,
+		"dry-run", CmdImportFlagsDefaults.DryRun,
+		_h,
+	)
 }
 
 func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
@@ -256,11 +262,11 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 		f.RangeMultiCol = true
 	}
 
-	// prepare output file.
+	// prepare output file; a dry run writes none.
 	var outFile *os.File
 	if f.Out == "" {
 		outFile = os.Stdout
-	} else {
+	} else if !f.DryRun {
 		var err error
 		outFile, err = os.Create(f.Out)
 		if err != nil {
@@ -269,23 +275,32 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 		defer outFile.Close()
 	}
 
-	// init tree.
+	// init tree, or what a dry run counts in its place.
 	dbdesc := "internetdata " + filepath.Base(f.Out)
-	tree, err := mmdbwriter.New(
-		mmdbwriter.Options{
-			DatabaseType: dbdesc,
-			Description: map[string]string{
-				"en": dbdesc,
-			},
-			Languages:               []string{"en"},
-			DisableIPv4Aliasing:     !f.Alias6to4,
-			IncludeReservedNetworks: !f.DisallowReserved,
-			IPVersion:               f.Ip,
-			RecordSize:              f.Size,
-			DisableMetadataPointers: f.DisableMetadataPtrs,
-			Inserter:                mergeStrategy,
+	opts := mmdbwriter.Options{
+		DatabaseType: dbdesc,
+		Description: map[string]string{
+			"en": dbdesc,
 		},
-	)
+		Languages:               []string{"en"},
+		DisableIPv4Aliasing:     !f.Alias6to4,
+		IncludeReservedNetworks: !f.DisallowReserved,
+		IPVersion:               f.Ip,
+		RecordSize:              f.Size,
+		DisableMetadataPointers: f.DisableMetadataPtrs,
+		Inserter:                mergeStrategy,
+	}
+	var tree *mmdbwriter.Tree
+	var dry *dryRun
+	var target importTarget
+	var err error
+	if f.DryRun {
+		dry, err = newDryRun(opts)
+		target = dry
+	} else {
+		tree, err = mmdbwriter.New(opts)
+		target = tree
+	}
 	if err != nil {
 		return fmt.Errorf("could not create tree: %w", err)
 	}
@@ -339,7 +354,7 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 				ParseCSVHeaders(parts, &f, &dataColStart)
 
 				// Now that f.Fields may have been resolved, the preprocessing step can be run
-				err = Preprocess(f, tree)
+				err = Preprocess(f, target)
 				if err != nil {
 					return err
 				}
@@ -350,7 +365,7 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 				}
 			}
 
-			err = AppendCSVRecord(f, dataColStart, delim, parts, tree)
+			err = AppendCSVRecord(f, dataColStart, delim, parts, target)
 			if err != nil {
 				return err
 			}
@@ -361,7 +376,7 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 		dataStream := json.NewDecoder(inFileBuffered)
 
 		// For JSON input, f.Fields may have been specified using the --fields flag, so preprocessing can be run
-		err = Preprocess(f, tree)
+		err = Preprocess(f, target)
 		if err != nil {
 			return err
 		}
@@ -429,7 +444,7 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 				networkStrParts := strings.Split(networkStr, "-")
 				startIp, _ := netip.ParseAddr(networkStrParts[0])
 				endIp, _ := netip.ParseAddr(networkStrParts[1])
-				if err := tree.InsertRange(startIp, endIp, subMap); err != nil {
+				if err := target.InsertRange(startIp, endIp, subMap); err != nil {
 					fmt.Fprintf(
 						os.Stderr, "warn: couldn't insert '%v'\n",
 						mResult,
@@ -443,7 +458,7 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 						networkStr, err,
 					)
 				}
-				if err := tree.Insert(network, subMap); err != nil {
+				if err := target.Insert(network, subMap); err != nil {
 					fmt.Fprintf(
 						os.Stderr, "warn: couldn't insert '%v'\n",
 						mResult,
@@ -459,6 +474,15 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 		return errors.New("nothing to import")
 	}
 
+	if f.DryRun {
+		report, err := dry.report(entrycnt)
+		if err != nil {
+			return fmt.Errorf("dry run failed: %w", err)
+		}
+		report.print(os.Stdout, f.Out, f.Size)
+		return nil
+	}
+
 	// write out mmdb file.
 	fmt.Fprintf(os.Stderr, "writing to %s (%v entries)\n", f.Out, entrycnt)
 	if _, err := tree.WriteTo(outFile); err != nil {
@@ -468,7 +492,7 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 	return nil
 }
 
-func Preprocess(f CmdImportFlags, tree *mmdbwriter.Tree) error {
+func Preprocess(f CmdImportFlags, tree importTarget) error {
 	// insert empty values for all fields in 0.0.0.0/0 if requested.
 	if f.IgnoreEmptyVals {
 		network := netip.MustParsePrefix("0.0.0.0/0")
@@ -537,7 +561,7 @@ func ParseJSONKeys(result map[string]interface{}, f *CmdImportFlags) {
 	}
 }
 
-func AppendCSVRecord(f CmdImportFlags, dataColStart int, delim rune, parts []string, tree *mmdbwriter.Tree) error {
+func AppendCSVRecord(f CmdImportFlags, dataColStart int, delim rune, parts []string, tree importTarget) error {
 	if startIP, err := iputil.AddrFromDecimal(parts[0], false); err == nil {
 		parts[0] = startIP.String()
 	}

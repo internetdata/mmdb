@@ -196,6 +196,9 @@ $ cat data.tsv | mmdb import --ip 4 --tsv --out data.mmdb
 # don't include the implicit `network` field in the output MMDB:
 $ mmdb import --no-network --in data.csv --out data.mmdb
 
+# size a build before running it: its nodes, records, fit and memory.
+$ mmdb import --dry-run --no-network --in data.csv --out data.mmdb
+
 # generate an MMDB without any fields, just IP ranges that meet a criteria.
 $ mmdb import \
     --size 24 --no-fields --ip 4 \
