@@ -2,6 +2,12 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.2.0 - 2026-10-03
+
+### Features
+
+- Add import --dry-run, which sizes a build without running it ([`c5717d1`](https://github.com/internetdata/mmdb/commit/c5717d18610313cc66f0753a2f0236d035271891))
+
 ## 1.1.0 - 2026-10-02
 
 ### Features
