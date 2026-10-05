@@ -73,8 +73,8 @@ Binaries are published for 23 platform and architecture pairs on the [releases p
 
 ```bash
 # Linux amd64; for Windows use ".zip" instead of ".tar.gz"
-curl -LO https://github.com/internetdata/mmdb/releases/download/v1.2.0/mmdb_1.2.0_linux_amd64.tar.gz
-tar -xzf mmdb_1.2.0_linux_amd64.tar.gz
+curl -LO https://github.com/internetdata/mmdb/releases/download/v1.2.1/mmdb_1.2.1_linux_amd64.tar.gz
+tar -xzf mmdb_1.2.1_linux_amd64.tar.gz
 sudo mv mmdb /usr/local/bin/
 ```
 

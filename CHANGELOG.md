@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.2.1 - 2026-10-05
+
+### Fixes
+
+- Take maxminddb-golang 2.7.0: verify accepts a record pointing into another ([`5aea249`](https://github.com/internetdata/mmdb/commit/5aea24941f091aae3fc8e5e643d8192bcef3710d))
+- macos.sh: install the arm64 binary from a shell running under Rosetta ([`cf658d4`](https://github.com/internetdata/mmdb/commit/cf658d41ddf0988c8672c046aa40d78cee355ff9))
+
 ## 1.2.0 - 2026-10-03
 
 ### Features
