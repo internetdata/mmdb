@@ -15,10 +15,16 @@ if [ "${os%%.*}" -lt 13 ] 2>/dev/null ; then
     exit 1
 fi
 
-case "$(uname -m)" in
+# Under Rosetta, uname says x86_64 on Apple Silicon, and an amd64 binary stops
+# running once Rosetta is gone. sysctl.proc_translated is 1 only in a translated process.
+MACHINE="$(uname -m)"
+if [ "$MACHINE" = x86_64 ] && [ "$(sysctl -n sysctl.proc_translated 2>/dev/null)" = 1 ] ; then
+    MACHINE=arm64
+fi
+case "$MACHINE" in
     arm64)  ARCH=arm64 ;;
     x86_64) ARCH=amd64 ;;
-    *)      echo "unsupported architecture: $(uname -m)" >&2 ; exit 1 ;;
+    *)      echo "unsupported architecture: ${MACHINE}" >&2 ; exit 1 ;;
 esac
 
 TARBALL="mmdb_${VSN}_darwin_${ARCH}.tar.gz"
