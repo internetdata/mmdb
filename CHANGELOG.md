@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.3.0 - 2026-10-07
+
+### Fixes
+
+- Exit 1 when a command fails, and when verify finds the file invalid ([`c3ad056`](https://github.com/internetdata/mmdb/commit/c3ad056f2986088ea478df73df88ab3676c6ed74))
+- read: print the help when no mmdb file is named, whatever the flags ([`e817bdd`](https://github.com/internetdata/mmdb/commit/e817bdd8e46f1a303e27cdbc8b1a0a7e45aab1cc))
+
 ## 1.2.1 - 2026-10-05
 
 ### Fixes
