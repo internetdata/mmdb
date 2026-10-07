@@ -3,9 +3,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	mmdbLib "github.com/internetdata/mmdb/lib"
 
 	"github.com/fatih/color"
 )
@@ -58,6 +61,9 @@ func main() {
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "err: %v\n", err)
+		if !errors.Is(err, mmdbLib.ErrPrinted) {
+			fmt.Fprintf(os.Stderr, "err: %v\n", err)
+		}
+		os.Exit(1)
 	}
 }

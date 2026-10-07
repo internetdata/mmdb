@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	mmdbLib "github.com/internetdata/mmdb/lib"
+
 	complete "github.com/mslmio/libgo-complete"
 	"github.com/mslmio/libgo-complete/install"
 	"github.com/mslmio/libgo-complete/predict"
@@ -80,7 +82,7 @@ func cmdCompletion() error {
 	default:
 		fmt.Printf("err: %s is not a valid subcommand\n\n", args[0])
 		printHelpCompletion()
-		return nil
+		return mmdbLib.ErrPrinted
 	}
 	if err != nil {
 		return err

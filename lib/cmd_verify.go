@@ -10,6 +10,10 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// ErrPrinted is returned by a command that has already printed why it failed,
+// as verify does for an invalid file: exit non-zero and print nothing more.
+var ErrPrinted = errors.New("failure already printed")
+
 // CmdVerifyFlags are flags expected by CmdVerify.
 type CmdVerifyFlags struct {
 	Help bool
@@ -51,9 +55,9 @@ func CmdVerify(f CmdVerifyFlags, args []string, printHelp func()) error {
 	err = db.Verify()
 	if err != nil {
 		fmt.Printf("invalid: %v\n", err)
-	} else {
-		fmt.Println("valid")
+		return ErrPrinted
 	}
+	fmt.Println("valid")
 
 	return nil
 }
