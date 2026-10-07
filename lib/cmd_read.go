@@ -59,8 +59,8 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 		color.NoColor = true
 	}
 
-	// help?
-	if f.Help || (pflag.NArg() == 1 && pflag.NFlag() == 0) {
+	// help? with no argument there is no mmdb file to read, whatever the flags.
+	if f.Help || len(args) == 0 {
 		printHelp()
 		return nil
 	}
