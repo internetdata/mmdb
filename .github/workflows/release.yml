@@ -181,9 +181,12 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
       # vedantmgoyal2009 was renamed to vedantmgoyal9; the old path only still
-      # resolves through GitHub's rename redirect.
+      # resolves through GitHub's rename redirect. Pinned to the commit v2 named
+      # until 2026-10-07, when v2 moved to a rewrite whose action.yml does not
+      # load (vedantmgoyal9/winget-releaser#345). A moved tag hands the token to
+      # code nobody here has read, so move this pin by hand.
       - if: steps.guard.outputs.configured == 'true'
-        uses: vedantmgoyal9/winget-releaser@v2
+        uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e
         with:
           identifier: InternetData.Mmdb
           installers-regex: '_windows_\w+\.zip$'
