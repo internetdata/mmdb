@@ -84,14 +84,44 @@ func TestExitStatus(t *testing.T) {
 	}
 }
 
+// TestCompletion pins what the shell is offered after a flag: nothing after one
+// that takes a value, so the shell lists file names, and the command's options
+// again after one that takes none.
+func TestCompletion(t *testing.T) {
+	tests := []struct {
+		line string
+		want string
+	}{
+		{"mmdb import --in ", ""},
+		{"mmdb import -i ", ""},
+		{"mmdb import --out ", ""},
+		{"mmdb import -f ", ""},
+		{"mmdb export -o ", ""},
+		{"mmdb import --csv --no-", "--no-fields\n--no-network\n"},
+		{"mmdb export --cidr-only --f", "--format\n"},
+	}
+	for _, tc := range tests {
+		stdout, stderr, code := runMainEnv(t, []string{"COMP_LINE=" + tc.line})
+		if code != 0 || stdout != tc.want || stderr != "" {
+			t.Errorf("%q: exit %d, stdout %q, stderr %q; want %q", tc.line, code, stdout, stderr, tc.want)
+		}
+	}
+}
+
 func runMain(t *testing.T, args ...string) (string, string, int) {
+	t.Helper()
+	return runMainEnv(t, nil, args...)
+}
+
+// runMainEnv runs main with env added to the test's environment.
+func runMainEnv(t *testing.T, env []string, args ...string) (string, string, int) {
 	t.Helper()
 	self, err := os.Executable()
 	if err != nil {
 		t.Fatal(err)
 	}
 	cmd := exec.Command(self, args...)
-	cmd.Env = append(os.Environ(), "MMDB_TEST_RUN_MAIN=1")
+	cmd.Env = append(append(os.Environ(), env...), "MMDB_TEST_RUN_MAIN=1")
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

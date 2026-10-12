@@ -19,8 +19,8 @@ var completionsExport = &complete.Command{
 	Flags: map[string]complete.Predictor{
 		"-h":          predict.Nothing,
 		"--help":      predict.Nothing,
-		"-o":          predict.Nothing,
-		"--out":       predict.Nothing,
+		"-o":          predict.Something,
+		"--out":       predict.Something,
 		"-f":          predict.Set(predictFormats),
 		"--format":    predict.Set(predictFormats),
 		"--cidr-only": predict.Nothing,
