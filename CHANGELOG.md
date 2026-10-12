@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.3.1 - 2026-10-12
+
+### Fixes
+
+- Offer the options again after a flag that takes no value ([`d5684a6`](https://github.com/internetdata/mmdb/commit/d5684a6476dcb3aaea786e29a2cffadf6e5936fb))
+- Build every release on Go 1.27.2, pinned in all four places ([`c844123`](https://github.com/internetdata/mmdb/commit/c8441233ab7c57c3303d1bca2b36b46595661ef9))
+
 ## 1.3.0 - 2026-10-07
 
 ### Fixes
