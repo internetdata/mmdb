@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.5.0 - 2026-10-13
+
+### Features
+
+- import --json: read an array, and report a bad record instead of crashing ([`6727757`](https://github.com/internetdata/mmdb/commit/67277576ba25243d974b37802e228abbbb964624))
+- Take mmdbwriter v2 as of 2026-10-07: imports run up to twice as fast ([`02c54f6`](https://github.com/internetdata/mmdb/commit/02c54f694ec3d954eae942dcb84cecb2d5f89aa8))
+
 ## 1.4.0 - 2026-10-13
 
 ### Fixes
