@@ -2,6 +2,12 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.4.0 - 2026-10-13
+
+### Fixes
+
+- Keep the old output whole when an import or compress fails ([`e5ef0a8`](https://github.com/internetdata/mmdb/commit/e5ef0a8c912b5e75cd954f8b0b07aa856911bed7))
+
 ## 1.3.1 - 2026-10-12
 
 ### Fixes
