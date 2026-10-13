@@ -87,7 +87,8 @@ Options:
       interpret input file as TSV.
       by default, the .tsv extension will turn this on.
     -j, --json
-      interpret input file as JSON.
+      interpret input file as JSON: objects one after another, or an array
+      of them.
       by default, the .json extension will turn this on.
 
   Fields:

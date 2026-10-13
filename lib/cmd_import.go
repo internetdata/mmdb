@@ -371,7 +371,23 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 			entrycnt += 1
 		}
 	} else if delim == '-' {
+		// The records are objects one after another, or the elements of one
+		// top-level array; either way they are decoded one at a time.
+		inArray := false
+		for {
+			b, err := inFileBuffered.Peek(1)
+			if err != nil || strings.IndexByte(" \t\r\n", b[0]) < 0 {
+				inArray = err == nil && b[0] == '['
+				break
+			}
+			inFileBuffered.Discard(1)
+		}
 		dataStream := json.NewDecoder(inFileBuffered)
+		if inArray {
+			if _, err := dataStream.Token(); err != nil {
+				return fmt.Errorf("couldn't read the array of records: %w", err)
+			}
+		}
 
 		// For JSON input, f.Fields may have been specified using the --fields flag, so preprocessing can be run
 		err = Preprocess(f, target)
@@ -380,19 +396,22 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 		}
 
 		fieldsResolved := false
-		for {
-			// Decode one JSON document.
-			var row interface{}
-			err := dataStream.Decode(&row)
-
-			if err != nil {
-				// io.EOF is expected at end of stream.
-				if err != io.EOF {
-					return fmt.Errorf("error in io.EOF: %w", err)
-				}
+		for n := 1; ; n++ {
+			if inArray && !dataStream.More() {
 				break
 			}
-			mResult := row.(map[string]interface{})
+			var row interface{}
+			err := dataStream.Decode(&row)
+			if err == io.EOF && !inArray {
+				break
+			}
+			if err != nil {
+				return fmt.Errorf("record %d: %w", n, err)
+			}
+			mResult, ok := row.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("record %d is not a JSON object", n)
+			}
 
 			if !fieldsResolved {
 				fieldsResolved = true
@@ -402,7 +421,11 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 			// convert 2 IPs into IP range?
 			var networkStr string
 			if val, ok := mResult["start_ip"].(string); ok {
-				networkStr = val + "-" + mResult["end_ip"].(string)
+				endIP, ok := mResult["end_ip"].(string)
+				if !ok {
+					return fmt.Errorf("record %d has a start_ip but no end_ip", n)
+				}
+				networkStr = val + "-" + endIP
 				delete(mResult, "start_ip")
 				delete(mResult, "end_ip")
 				if _, ok := mResult["join_key"].(string); ok {
@@ -412,9 +435,7 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 				networkStr = val
 				delete(mResult, "range")
 			} else {
-				return errors.New(
-					"couldn't get ip or range from the record",
-				)
+				return fmt.Errorf("record %d has no range, or start_ip and end_ip", n)
 			}
 
 			// add network part to single-IP network if it's missing.
@@ -465,6 +486,14 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 			}
 
 			entrycnt += 1
+		}
+		if inArray {
+			if _, err := dataStream.Token(); err != nil {
+				return fmt.Errorf("the array of records is not closed: %w", err)
+			}
+			if _, err := dataStream.Token(); err != io.EOF {
+				return errors.New("the input goes on after the array of records")
+			}
 		}
 	}
 

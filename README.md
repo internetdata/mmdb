@@ -178,7 +178,7 @@ $ mmdb read 8.8.8.0,8.8.8.1 location.mmdb
 
 ### Importing
 
-Importing allows taking in files as CSV/TSV/JSON, and outputting an MMDB file.
+Importing allows taking in files as CSV/TSV/JSON, and outputting an MMDB file. JSON input is one object per record, with a `range`, or a `start_ip` and an `end_ip`: the objects one after another, or all in one array.
 
 Importing is one of the most powerful/flexible features in `mmdb`. However, we only allow strings throughout the data at the current time.
 

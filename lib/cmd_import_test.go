@@ -345,6 +345,100 @@ func TestCmdImport_JSONWithContent(t *testing.T) {
 	})
 }
 
+func TestCmdImport_JSONArray(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "input.json")
+	outputFile := filepath.Join(tempDir, "output.mmdb")
+
+	jsonData := `[
+  {"range": "167.153.128.0/17", "country": "US"},
+  {"start_ip": "204.138.232.0", "end_ip": "204.138.232.255", "country": "CA"}
+]
+`
+	if err := os.WriteFile(inputFile, []byte(jsonData), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	f := CmdImportFlags{
+		Ip:    6,
+		Size:  32,
+		Merge: "none",
+		In:    inputFile,
+		Out:   outputFile,
+		Json:  true,
+	}
+
+	if err := CmdImport(f, []string{}, func() {}); err != nil {
+		t.Fatalf("unexpected error: %s", err.Error())
+	}
+
+	verifyMMDBContent(t, outputFile, []struct {
+		ip       string
+		expected map[string]interface{}
+	}{
+		{
+			ip: "167.153.128.1",
+			expected: map[string]interface{}{
+				"network": "167.153.128.0/17",
+				"country": "US",
+			},
+		},
+		{
+			ip: "204.138.232.1",
+			expected: map[string]interface{}{
+				"network": "204.138.232.0-204.138.232.255",
+				"country": "CA",
+			},
+		},
+	})
+}
+
+func TestCmdImport_MalformedJSON(t *testing.T) {
+	// An empty want takes any error: where an unclosed array is noticed
+	// depends on the Go release's decoder.
+	for _, tc := range []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"a string", `"just a string"`, "record 1 is not a JSON object"},
+		{"an array element", `[{"range": "1.0.0.0/24"}, 7]`, "record 2 is not a JSON object"},
+		{"no end_ip", `{"start_ip": "1.0.0.0"}`, "record 1 has a start_ip but no end_ip"},
+		{"no network", `{"country": "US"}`, "record 1 has no range, or start_ip and end_ip"},
+		{"invalid", `{"range": }`, "record 1: invalid character"},
+		{"an unclosed array", `[{"range": "1.0.0.0/24"}`, ""},
+		{"more after the array", `[{"range": "1.0.0.0/24"}] {"range": "2.0.0.0/24"}`,
+			"the input goes on after the array of records"},
+		{"an empty array", `[]`, "nothing to import"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			inputFile := filepath.Join(tempDir, "input.json")
+			outputFile := filepath.Join(tempDir, "output.mmdb")
+			if err := os.WriteFile(inputFile, []byte(tc.input), 0644); err != nil {
+				t.Fatal(err)
+			}
+
+			f := CmdImportFlags{
+				Ip:    6,
+				Size:  32,
+				Merge: "none",
+				In:    inputFile,
+				Out:   outputFile,
+				Json:  true,
+			}
+
+			err := CmdImport(f, []string{}, func() {})
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("got %v, want an error containing %q", err, tc.want)
+			}
+			if _, err := os.Stat(outputFile); !os.IsNotExist(err) {
+				t.Errorf("a failed import left %v", outputFile)
+			}
+		})
+	}
+}
+
 func TestCmdImport_IPRangeWithContent(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "input.csv")
