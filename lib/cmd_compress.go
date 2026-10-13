@@ -82,13 +82,14 @@ func CmdCompress(f CmdCompressFlags, args []string, printHelp func()) error {
 		return err
 	}
 
-	// Every network of the input is kept, reserved ones included, and its
-	// IPv4 aliases only if it had them.
+	// Every network of the input is kept, reserved ones included, its IPv4
+	// aliases only if it had them, and its record size, which Load drops.
 	tree, err := mmdbwriter.Load(in, mmdbwriter.Options{
 		BuildEpoch:              int64(md.BuildEpoch),
 		DisableIPv4Aliasing:     !aliased,
 		IncludeReservedNetworks: true,
 		DisableMetadataPointers: true,
+		RecordSize:              int(md.RecordSize),
 	})
 	if err != nil {
 		return fmt.Errorf("couldn't load %v: %w", in, err)
