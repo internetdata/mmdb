@@ -263,16 +263,14 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 	}
 
 	// prepare output file; a dry run writes none.
-	var outFile *os.File
-	if f.Out == "" {
-		outFile = os.Stdout
-	} else if !f.DryRun {
+	var out *outFile
+	if f.Out != "" && !f.DryRun {
 		var err error
-		outFile, err = os.Create(f.Out)
+		out, err = createOut(f.Out)
 		if err != nil {
 			return fmt.Errorf("could not create %v: %w", f.Out, err)
 		}
-		defer outFile.Close()
+		defer out.abort()
 	}
 
 	// init tree, or what a dry run counts in its place.
@@ -485,7 +483,12 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 
 	// write out mmdb file.
 	fmt.Fprintf(os.Stderr, "writing to %s (%v entries)\n", f.Out, entrycnt)
-	if _, err := tree.WriteTo(outFile); err != nil {
+	if out == nil {
+		_, err = tree.WriteTo(os.Stdout)
+	} else if _, err = tree.WriteTo(out.File); err == nil {
+		err = out.commit()
+	}
+	if err != nil {
 		return fmt.Errorf("writing out to tree failed: %w", err)
 	}
 

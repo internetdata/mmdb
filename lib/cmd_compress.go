@@ -94,18 +94,20 @@ func CmdCompress(f CmdCompressFlags, args []string, printHelp func()) error {
 		return fmt.Errorf("couldn't load %v: %w", in, err)
 	}
 
-	outFile, err := os.Create(out)
+	outFile, err := createOut(out)
 	if err != nil {
 		return fmt.Errorf("could not create %v: %w", out, err)
 	}
-	written, err := tree.WriteTo(outFile)
+	direct := outFile.tmp == ""
+	written, err := tree.WriteTo(outFile.File)
 	if err == nil {
-		err = outFile.Close()
-	} else {
-		outFile.Close()
+		err = outFile.commit()
 	}
 	if err != nil {
-		os.Remove(out)
+		outFile.abort()
+		if direct {
+			os.Remove(out)
+		}
 		return fmt.Errorf("writing %v failed: %w", out, err)
 	}
 
