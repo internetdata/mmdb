@@ -184,14 +184,6 @@ Importing is one of the most powerful/flexible features in `mmdb`. However, we o
 
 See `mmdb import --help` for full details on usage.
 
-`import` builds the database in a hidden file beside `--out` and renames it over
-`--out` once it is complete: a rebuild that fails leaves the old file whole, and
-a program that has the old file open keeps reading it. The new file takes the
-old one's mode, owner and group. `import` writes `--out` in place instead where
-a rename could not stand in for that: a symlink, a file with another hard link,
-a FIFO or device, a file whose owner it cannot give the new one, or a directory
-it cannot create a file in. `compress` writes its output the same way.
-
 Here are some basic examples:
 
 ```bash
