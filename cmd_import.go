@@ -25,6 +25,7 @@ var completionsImport = &complete.Command{
 		"--in":                        predict.Something,
 		"-o":                          predict.Something,
 		"--out":                       predict.Something,
+		"--backup":                    predict.Something,
 		"-c":                          predict.Nothing,
 		"--csv":                       predict.Nothing,
 		"-t":                          predict.Nothing,
@@ -80,6 +81,9 @@ Options:
     -o <fname>, --out <fname>
       output file name. (e.g. sample.mmdb)
       default: stdout.
+    --backup <suffix>
+      keep the file --out replaces, as <fname><suffix>. (e.g. .bak)
+      default: no backup.
     -c, --csv
       interpret input file as CSV.
       by default, the .csv extension will turn this on.

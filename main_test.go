@@ -66,6 +66,8 @@ func TestExitStatus(t *testing.T) {
 			0, "", "err: couldn't get data for 9.9.9.9\n"},
 		{"completion of an unknown shell", []string{"completion", "bogus"},
 			1, "err: bogus is not a valid subcommand\n", ""},
+		{"import with an empty backup suffix", []string{"import", "--csv", "--backup", "", csvPath, db},
+			1, "", "err: --backup needs a suffix, such as .bak\n"},
 		{"an unknown flag", []string{"verify", "--bogus", db}, 2, "", "Usage of "},
 	}
 	for _, tc := range tests {
@@ -97,6 +99,8 @@ func TestCompletion(t *testing.T) {
 		{"mmdb import --out ", ""},
 		{"mmdb import -f ", ""},
 		{"mmdb export -o ", ""},
+		{"mmdb import --backup ", ""},
+		{"mmdb compress --backup ", ""},
 		{"mmdb import --csv --no-", "--no-fields\n--no-network\n"},
 		{"mmdb export --cidr-only --f", "--format\n"},
 	}

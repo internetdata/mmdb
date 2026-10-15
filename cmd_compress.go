@@ -13,8 +13,9 @@ import (
 
 var completionsCompress = &complete.Command{
 	Flags: map[string]complete.Predictor{
-		"-h":     predict.Nothing,
-		"--help": predict.Nothing,
+		"-h":       predict.Nothing,
+		"--help":   predict.Nothing,
+		"--backup": predict.Something,
 	},
 }
 
@@ -34,6 +35,12 @@ Options:
   General:
     --help, -h
       show help.
+
+  Output:
+    --backup <suffix>
+      keep the file <out_mmdb_file> replaces, as <out_mmdb_file><suffix>.
+      (e.g. .bak)
+      default: no backup.
 `, progBase)
 }
 

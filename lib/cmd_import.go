@@ -27,6 +27,7 @@ type CmdImportFlags struct {
 	Help                bool
 	In                  string
 	Out                 string
+	Backup              string
 	Csv                 bool
 	Tsv                 bool
 	Json                bool
@@ -50,6 +51,7 @@ var CmdImportFlagsDefaults = CmdImportFlags{
 	Help:                false,
 	In:                  "",
 	Out:                 "",
+	Backup:              "",
 	Csv:                 false,
 	Tsv:                 false,
 	Json:                false,
@@ -88,6 +90,11 @@ func (f *CmdImportFlags) Init() {
 	pflag.StringVarP(
 		&f.Out,
 		"out", "o", CmdImportFlagsDefaults.Out,
+		_h,
+	)
+	pflag.StringVar(
+		&f.Backup,
+		"backup", CmdImportFlagsDefaults.Backup,
 		_h,
 	)
 	pflag.BoolVarP(
@@ -262,13 +269,31 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 		f.RangeMultiCol = true
 	}
 
+	// figure out backup name.
+	backup := ""
+	if f.Backup != "" || pflag.CommandLine.Changed("backup") {
+		if f.Out == "" {
+			return errors.New("--backup needs --out")
+		}
+		var err error
+		backup, err = backupName(f.Out, f.Backup)
+		if err != nil {
+			return err
+		}
+	}
+
 	// prepare output file; a dry run writes none.
 	var out *outFile
 	if f.Out != "" && !f.DryRun {
+		if backup != "" {
+			if err := checkBackup(f.Out, backup, f.In); err != nil {
+				return err
+			}
+		}
 		var err error
-		out, err = createOut(f.Out)
+		out, err = createOut(f.Out, backup)
 		if err != nil {
-			return fmt.Errorf("could not create %v: %w", f.Out, err)
+			return err
 		}
 		defer out.abort()
 	}
