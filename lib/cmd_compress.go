@@ -16,7 +16,8 @@ import (
 
 // CmdCompressFlags are flags expected by CmdCompress.
 type CmdCompressFlags struct {
-	Help bool
+	Help   bool
+	Backup string
 }
 
 // Init initializes the common flags available to CmdCompress with sensible
@@ -24,10 +25,16 @@ type CmdCompressFlags struct {
 //
 // pflag.Parse() must be called to actually use the final flag values.
 func (f *CmdCompressFlags) Init() {
+	_h := "see description in --help"
 	pflag.BoolVarP(
 		&f.Help,
 		"help", "h", false,
 		"show help.",
+	)
+	pflag.StringVar(
+		&f.Backup,
+		"backup", "",
+		_h,
 	)
 }
 
@@ -44,6 +51,14 @@ func CmdCompress(f CmdCompressFlags, args []string, printHelp func()) error {
 		return errors.New("input and output mmdb files required as arguments")
 	}
 	in, out := args[0], args[1]
+	backup := ""
+	if f.Backup != "" || pflag.CommandLine.Changed("backup") {
+		var err error
+		backup, err = backupName(out, f.Backup)
+		if err != nil {
+			return err
+		}
+	}
 
 	inStat, err := os.Stat(in)
 	if err != nil {
@@ -51,6 +66,11 @@ func CmdCompress(f CmdCompressFlags, args []string, printHelp func()) error {
 	}
 	if outStat, err := os.Stat(out); err == nil && os.SameFile(inStat, outStat) {
 		return errors.New("output must be a different file than the input")
+	}
+	if backup != "" {
+		if err := checkBackup(out, backup, in); err != nil {
+			return err
+		}
 	}
 
 	db, err := maxminddb.Open(in)
@@ -95,9 +115,9 @@ func CmdCompress(f CmdCompressFlags, args []string, printHelp func()) error {
 		return fmt.Errorf("couldn't load %v: %w", in, err)
 	}
 
-	outFile, err := createOut(out)
+	outFile, err := createOut(out, backup)
 	if err != nil {
-		return fmt.Errorf("could not create %v: %w", out, err)
+		return err
 	}
 	direct := outFile.tmp == ""
 	written, err := tree.WriteTo(outFile.File)
