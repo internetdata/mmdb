@@ -2,6 +2,12 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.6.0 - 2026-10-15
+
+### Features
+
+- Add --backup, which keeps the file import or compress replaces ([`620374d`](https://github.com/internetdata/mmdb/commit/620374d12f6894813aaa411663ccd0a42fe0747a))
+
 ## 1.5.0 - 2026-10-13
 
 ### Features
