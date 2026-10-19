@@ -29,6 +29,24 @@ func TestReadWithNoFilePrintsHelp(t *testing.T) {
 	}
 }
 
+// TestReadListWithByteOrderMark pins that a list starting with a UTF-8 byte
+// order mark, as Excel's CSV UTF-8 export writes, keeps its first address.
+func TestReadListWithByteOrderMark(t *testing.T) {
+	dir := t.TempDir()
+	csvPath := writeFile(t, dir, "a.csv", "network,c\n1.1.1.1,A\n8.8.8.8,B\n")
+	db := filepath.Join(dir, "a.mmdb")
+	if _, stderr, code := runMain(t, "import", "--csv", csvPath, db); code != 0 {
+		t.Fatalf("import exited %d: %s", code, stderr)
+	}
+	list := writeFile(t, dir, "ips.txt", "\xef\xbb\xbf1.1.1.1\r\n8.8.8.8\r\n")
+
+	stdout, stderr, code := runMain(t, "read", "-f", "csv", list, db)
+	want := "ip,c,network\n1.1.1.1,A,1.1.1.1/32\n8.8.8.8,B,8.8.8.8/32\n"
+	if code != 0 || stdout != want || stderr != "" {
+		t.Errorf("exit %d, stdout %q, stderr %q; want %q", code, stdout, stderr, want)
+	}
+}
+
 func TestExitStatus(t *testing.T) {
 	dir := t.TempDir()
 	csvPath := writeFile(t, dir, "a.csv", "network,country\n1.0.0.0/24,AU\n8.8.8.8,US\n")

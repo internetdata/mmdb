@@ -10,8 +10,8 @@ github.com/maxmind/mmdbwriter/v2 v2.0.0-20261007223840-9a8f309f0d71 h1:JAcOLOiWi
 github.com/maxmind/mmdbwriter/v2 v2.0.0-20261007223840-9a8f309f0d71/go.mod h1:wgHnsdUYfQeQZI6xWn4Ix7zt1b9/Wi5Q9JJMFa1jZDk=
 github.com/mslmio/libgo-complete v1.0.2 h1:UPqJ1ABNNwUyfkT5+KnHJtmG0YVpyUt91tebVDvzEH4=
 github.com/mslmio/libgo-complete v1.0.2/go.mod h1:05bktVRP2fJdif0i1kvSFQiHlI4Lik1INd83vCBLCec=
-github.com/mslmio/libgo-iputil v1.1.2 h1:+N4Ox+liRsaVmE03pK9WnGvjTLI5RbcZkuRIeh+y6LU=
-github.com/mslmio/libgo-iputil v1.1.2/go.mod h1:Btwfov9kmmMwReZI9bD5y7idQRDq68RxERLnnMp7lN4=
+github.com/mslmio/libgo-iputil v1.1.3 h1:XFu181OlCCE+fKFLR+190tgHt5uBx880QtLKj8f7IdY=
+github.com/mslmio/libgo-iputil v1.1.3/go.mod h1:Btwfov9kmmMwReZI9bD5y7idQRDq68RxERLnnMp7lN4=
 github.com/oschwald/maxminddb-golang/v2 v2.7.0 h1:ZcAr3GYc2LYC8aec2mCMX9+QOF0EolH3jDFKRV/Z1+U=
 github.com/oschwald/maxminddb-golang/v2 v2.7.0/go.mod h1:DuKJLbbug6TXC0yJXgs1MWifvXHmudRWzMobMIUu04g=
 github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
