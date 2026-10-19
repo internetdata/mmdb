@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.6.1 - 2026-10-19
+
+### Fixes
+
+- read: keep a list's first address after a byte order mark ([`ef54520`](https://github.com/internetdata/mmdb/commit/ef54520e430afb34a697908f9517ef803307ec2b))
+- Take maxminddb-golang 2.8.0, go-colorable 0.1.16 and x/sys 0.49.0 ([`6eebea3`](https://github.com/internetdata/mmdb/commit/6eebea382737f84595138b65534b513a50589b2f))
+
 ## 1.6.0 - 2026-10-15
 
 ### Features
