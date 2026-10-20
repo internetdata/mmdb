@@ -128,6 +128,10 @@ func TestDryRunReport_Fits(t *testing.T) {
 		{20_000_000, 0, 24, "in 28- and 32-bit records, not --size 24"},
 		{3_480_000_000, 599_000_000, 32, "in 32-bit records only, at most 95% full"},
 		{4_500_000_000, 0, 32, "may not: up to 105% of the 32-bit space"},
+		{1_644_664, 10_148, 0, "in 24-, 28- and 32-bit records; 24-bit at most 10% full"},
+		{20_000_000, 0, 0, "in 28- and 32-bit records; 28-bit at most 7% full"},
+		{3_480_000_000, 599_000_000, 0, "in 32-bit records only, at most 95% full"},
+		{4_500_000_000, 0, 0, "may not: up to 105% of the 32-bit space"},
 	}
 	for _, tt := range tests {
 		r := dryRunReport{Nodes: tt.nodes, DataBytes: tt.data}
