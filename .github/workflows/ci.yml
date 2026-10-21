@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # 1.27.2 is what the release and the Dockerfile build with, on the
+        # 1.27.3 is what the release and the Dockerfile build with, on the
         # line of the go.mod floor, which mmdbwriter v2 sets, so one leg
         # serves both. govulncheck runs on it because every binary ships that
         # Go's standard library. An exact patch, so a Go security release
         # turns this leg red until the pin moves, rather than reaching users
         # only with the next tag.
-        go: ['1.27.2']
+        go: ['1.27.3']
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -38,7 +38,7 @@ jobs:
       # GOTOOLCHAIN=auto for the install alone: setup-go exports local, and
       # govulncheck may need a newer Go to build than the one it scans with.
       - name: govulncheck
-        if: matrix.go == '1.27.2'
+        if: matrix.go == '1.27.3'
         run: |
           GOTOOLCHAIN=auto go install golang.org/x/vuln/cmd/govulncheck@latest
           # Each GOOS build-all-platforms.sh ships: a scan reads only that GOOS's files.
@@ -55,5 +55,5 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.27.2'
+          go-version: '1.27.3'
       - run: ./scripts/build-all-platforms.sh 0.0.0-ci
