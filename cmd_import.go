@@ -14,7 +14,7 @@ import (
 )
 
 var predictIpVsn = []string{"4", "6"}
-var predictSize = []string{"24", "28", "32"}
+var predictSize = []string{"auto", "24", "28", "32"}
 var predictMerge = []string{"none", "toplevel", "recurse"}
 
 var completionsImport = &complete.Command{
@@ -132,9 +132,10 @@ Options:
     --ip <4 | 6>
       output file's ip version.
       default: 6.
-    -s, --size <24 | 28 | 32>
-      size of records in the mmdb tree.
-      default: 32.
+    -s, --size <auto | 24 | 28 | 32>
+      size of records in the mmdb tree, in bits. auto uses the smallest that
+      fits the tree and its data; a size too small for them fails the import.
+      default: auto.
     -m, --merge <none | toplevel | recurse>
       the merge strategy to use when inserting entries that conflict.
         none     => no merge; only replace conflicts.

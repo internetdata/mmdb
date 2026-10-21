@@ -12,6 +12,7 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	iputil "github.com/mslmio/libgo-iputil"
@@ -38,7 +39,7 @@ type CmdImportFlags struct {
 	NoFields            bool
 	NoNetwork           bool
 	Ip                  int
-	Size                int
+	Size                int // 24, 28 or 32, or 0 for the smallest that fits
 	Merge               string
 	IgnoreEmptyVals     bool
 	DisallowReserved    bool
@@ -62,7 +63,7 @@ var CmdImportFlagsDefaults = CmdImportFlags{
 	NoFields:            false,
 	NoNetwork:           false,
 	Ip:                  6,
-	Size:                32,
+	Size:                0,
 	Merge:               "none",
 	IgnoreEmptyVals:     false,
 	DisallowReserved:    false,
@@ -147,9 +148,10 @@ func (f *CmdImportFlags) Init() {
 		"ip", CmdImportFlagsDefaults.Ip,
 		_h,
 	)
-	pflag.IntVarP(
-		&f.Size,
-		"size", "s", CmdImportFlagsDefaults.Size,
+	f.Size = CmdImportFlagsDefaults.Size
+	pflag.VarP(
+		(*recordSizeFlag)(&f.Size),
+		"size", "s",
 		_h,
 	)
 	pflag.StringVarP(
@@ -203,8 +205,8 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 	}
 
 	// validate record size.
-	if f.Size != 24 && f.Size != 28 && f.Size != 32 {
-		return errors.New("record size must be 24, 28 or 32")
+	if f.Size != 0 && f.Size != 24 && f.Size != 28 && f.Size != 32 {
+		return errors.New("record size must be auto, 24, 28 or 32")
 	}
 
 	// validate merge strategy.
@@ -547,6 +549,34 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 	}
 
 	return nil
+}
+
+// recordSizeFlag is --size: auto, stored as 0, or a number of bits, which
+// CmdImport validates.
+type recordSizeFlag int
+
+func (s *recordSizeFlag) String() string {
+	if *s == 0 {
+		return "auto"
+	}
+	return strconv.Itoa(int(*s))
+}
+
+func (s *recordSizeFlag) Set(v string) error {
+	if v == "auto" {
+		*s = 0
+		return nil
+	}
+	n, err := strconv.ParseInt(v, 0, 0)
+	if err != nil {
+		return errors.New("record size must be auto, 24, 28 or 32")
+	}
+	*s = recordSizeFlag(n)
+	return nil
+}
+
+func (s *recordSizeFlag) Type() string {
+	return "string"
 }
 
 func Preprocess(f CmdImportFlags, tree importTarget) error {

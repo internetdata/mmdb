@@ -392,18 +392,17 @@ func (r dryRunReport) print(w io.Writer, out string, recordSize int) {
 }
 
 // fits says which record sizes can address the tree and its records, and how
-// full the chosen one would be.
+// full the chosen one would be; 0 chooses the smallest that fits.
 func (r dryRunReport) fits(recordSize int) string {
 	// A record points at a node or into the data section, past the node
 	// count and the 16-byte separator.
 	used := float64(r.Nodes) + 16 + float64(r.DataBytes)
-	var sizes []string
+	var sizes []int
 	for _, size := range []int{24, 28, 32} {
 		if used <= float64(uint64(1)<<size) {
-			sizes = append(sizes, fmt.Sprint(size))
+			sizes = append(sizes, size)
 		}
 	}
-	full := 100 * used / float64(uint64(1)<<recordSize)
 	var in string
 	switch len(sizes) {
 	case 0:
@@ -415,6 +414,10 @@ func (r dryRunReport) fits(recordSize int) string {
 	default:
 		in = "in 24-, 28- and 32-bit records"
 	}
+	if recordSize == 0 {
+		recordSize = sizes[0]
+	}
+	full := 100 * used / float64(uint64(1)<<recordSize)
 	if full > 100 {
 		return fmt.Sprintf("%s, not --size %d", in, recordSize)
 	}

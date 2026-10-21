@@ -3,6 +3,7 @@
 package lib
 
 import (
+	"fmt"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -68,8 +69,8 @@ func TestCmdImportFlags_Init(t *testing.T) {
 	if CmdImportFlagsDefaults.Ip != 6 {
 		t.Errorf("expected default Ip to be 6, got %d", CmdImportFlagsDefaults.Ip)
 	}
-	if CmdImportFlagsDefaults.Size != 32 {
-		t.Errorf("expected default Size to be 32, got %d", CmdImportFlagsDefaults.Size)
+	if CmdImportFlagsDefaults.Size != 0 {
+		t.Errorf("expected default Size to be 0 (auto), got %d", CmdImportFlagsDefaults.Size)
 	}
 	if CmdImportFlagsDefaults.Merge != "none" {
 		t.Errorf("expected default Merge to be 'none', got %s", CmdImportFlagsDefaults.Merge)
@@ -113,6 +114,46 @@ func TestCmdImport_InvalidRecordSize(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "record size must be") {
 		t.Errorf("expected record size error, got: %s", err.Error())
+	}
+}
+
+func TestCmdImport_RecordSize(t *testing.T) {
+	dir := t.TempDir()
+	in := filepath.Join(dir, "in.csv")
+	if err := os.WriteFile(in, []byte("network,country\n1.0.0.0/24,AU\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	for size, want := range map[int]uint{0: 24, 24: 24, 28: 28, 32: 32} {
+		out := filepath.Join(dir, fmt.Sprintf("out%d.mmdb", size))
+		f := CmdImportFlags{Ip: 6, Size: size, Merge: "none", In: in, Out: out, Csv: true}
+		if err := CmdImport(f, nil, func() {}); err != nil {
+			t.Fatalf("--size %d: %s", size, err)
+		}
+		db, err := maxminddb.Open(out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if db.Metadata.RecordSize != want {
+			t.Errorf("--size %d wrote %d-bit records, want %d", size, db.Metadata.RecordSize, want)
+		}
+		db.Close()
+	}
+}
+
+func TestRecordSizeFlag(t *testing.T) {
+	for in, want := range map[string]int{"auto": 0, "24": 24, "28": 28, "32": 32, "16": 16} {
+		var size int
+		f := (*recordSizeFlag)(&size)
+		if err := f.Set(in); err != nil || size != want {
+			t.Errorf("Set(%q) = %d, %v; want %d", in, size, err, want)
+		}
+		if f.String() != in {
+			t.Errorf("Set(%q) prints as %q", in, f.String())
+		}
+	}
+	var size int
+	if err := (*recordSizeFlag)(&size).Set("big"); err == nil {
+		t.Error("Set(\"big\") took a size that is no number")
 	}
 }
 
