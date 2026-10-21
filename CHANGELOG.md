@@ -2,6 +2,16 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.7.0 - 2026-10-21
+
+### Features
+
+- import: write the smallest record size that fits ([`7ab9330`](https://github.com/internetdata/mmdb/commit/7ab93300dda8921e375ec629349c8dc220a8ef2f))
+
+### Fixes
+
+- Build every release on Go 1.27.3 ([`bc8c7e7`](https://github.com/internetdata/mmdb/commit/bc8c7e7587b3eaae373f13f848daebce93221493))
+
 ## 1.6.1 - 2026-10-19
 
 ### Fixes
