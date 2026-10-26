@@ -6,8 +6,8 @@ github.com/mattn/go-colorable v0.1.16 h1:+2YjeAe7xP1OQbZW1jERPWWCDLlNqFNCvjiqGiA
 github.com/mattn/go-colorable v0.1.16/go.mod h1:6LmQG8QLFO4G5z1gPvYEzlUgJ2wF+stgPZH1UqBm1s8=
 github.com/mattn/go-isatty v0.0.24 h1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=
 github.com/mattn/go-isatty v0.0.24/go.mod h1:nMCL3Zebbrt45jsMDgnfIwz6ydEQApk5oEI3HqDio6A=
-github.com/maxmind/mmdbwriter/v2 v2.0.0-20261007223840-9a8f309f0d71 h1:JAcOLOiWieaBwuWUd0WmUpqRKlaKoVA9G4iLgxMcJa0=
-github.com/maxmind/mmdbwriter/v2 v2.0.0-20261007223840-9a8f309f0d71/go.mod h1:wgHnsdUYfQeQZI6xWn4Ix7zt1b9/Wi5Q9JJMFa1jZDk=
+github.com/maxmind/mmdbwriter/v2 v2.0.0-20261019230959-dbd946a4909e h1:Cf7Qj0sAGWzt0vUkxPEzRdafY8wG85OUfVm3Ip6qleA=
+github.com/maxmind/mmdbwriter/v2 v2.0.0-20261019230959-dbd946a4909e/go.mod h1:gWKq4T3yvU8hWtq8VXpehRDVcNfq4hB8esLwFgeSGAI=
 github.com/mslmio/libgo-complete v1.0.2 h1:UPqJ1ABNNwUyfkT5+KnHJtmG0YVpyUt91tebVDvzEH4=
 github.com/mslmio/libgo-complete v1.0.2/go.mod h1:05bktVRP2fJdif0i1kvSFQiHlI4Lik1INd83vCBLCec=
 github.com/mslmio/libgo-iputil v1.1.3 h1:XFu181OlCCE+fKFLR+190tgHt5uBx880QtLKj8f7IdY=

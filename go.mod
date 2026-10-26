@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	github.com/edsrzf/mmap-go v1.2.0
 	github.com/fatih/color v1.19.0
-	github.com/maxmind/mmdbwriter/v2 v2.0.0-20261007223840-9a8f309f0d71
+	github.com/maxmind/mmdbwriter/v2 v2.0.0-20261019230959-dbd946a4909e
 	github.com/mslmio/libgo-complete v1.0.2
 	github.com/mslmio/libgo-iputil v1.1.3
 	github.com/oschwald/maxminddb-golang/v2 v2.8.0
