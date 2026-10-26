@@ -254,6 +254,83 @@ func TestCmdExport_JSONFormat(t *testing.T) {
 	})
 }
 
+func TestCmdExport_JSONRangeAmongData(t *testing.T) {
+	tempDir := t.TempDir()
+	inputCSV := filepath.Join(tempDir, "placeholder.csv")
+	mmdbFile := filepath.Join(tempDir, "placeholder.mmdb")
+	outputFile := filepath.Join(tempDir, "output.json")
+
+	input := `network,asn,zcountry,__RANGE__
+1.1.1.0/24,AS__RANGE__1,AU__RANGE__,a
+8.8.8.0/24,__RANGE__,US,b
+`
+	if err := os.WriteFile(inputCSV, []byte(input), 0644); err != nil {
+		t.Fatal(err)
+	}
+	fImport := CmdImportFlags{
+		Ip:        6,
+		Merge:     "none",
+		NoNetwork: true,
+		In:        inputCSV,
+		Out:       mmdbFile,
+		Csv:       true,
+	}
+	if err := CmdImport(fImport, []string{}, func() {}); err != nil {
+		t.Fatalf("failed to create MMDB: %s", err.Error())
+	}
+
+	f := CmdExportFlags{
+		Format: "json",
+		Out:    outputFile,
+	}
+	if err := CmdExport(f, []string{mmdbFile}, func() {}); err != nil {
+		t.Fatalf("unexpected error: %s", err.Error())
+	}
+
+	got, err := os.ReadFile(outputFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"__RANGE__":"a","asn":"AS__RANGE__1","range":"1.1.1.0/24","zcountry":"AU__RANGE__"}
+{"__RANGE__":"b","asn":"__RANGE__","range":"8.8.8.0/24","zcountry":"US"}
+`
+	if string(got) != want {
+		t.Errorf("got\n%s\nwant\n%s", got, want)
+	}
+}
+
+func TestEncodeJSONRecord(t *testing.T) {
+	tests := []struct {
+		name   string
+		record map[string]any
+		want   string
+	}{
+		{"empty", map[string]any{}, `{"range":"R"}`},
+		{"keys before range", map[string]any{"asn": "1", "country": "US"},
+			`{"asn":"1","country":"US","range":"R"}`},
+		{"keys after range", map[string]any{"zone": "a", "type": 2.5},
+			`{"range":"R","type":2.5,"zone":"a"}`},
+		{"keys both sides", map[string]any{"zone": "a", "asn": "1"},
+			`{"asn":"1","range":"R","zone":"a"}`},
+		{"own range dropped", map[string]any{"range": "theirs", "asn": "1"},
+			`{"asn":"1","range":"R"}`},
+		{"nested", map[string]any{"geo": map[string]any{"range": "x", "b": []any{"c"}}},
+			`{"geo":{"b":["c"],"range":"x"},"range":"R"}`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			rec, err := encodeJSONRecord(tc.record)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := string(rec.line[:rec.cut]) + "R" + string(rec.line[rec.cut:])
+			if got != tc.want {
+				t.Errorf("got %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestCmdExport_FormatInferredFromFilename(t *testing.T) {
 	tests := []struct {
 		name           string
