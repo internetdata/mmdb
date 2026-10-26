@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.7.1 - 2026-10-26
+
+### Fixes
+
+- export: write -f json's range where it belongs, whatever the data holds ([`33598f0`](https://github.com/internetdata/mmdb/commit/33598f0421c068564b41dce79793316d05938152))
+- Take mmdbwriter v2 as of 2026-10-19 ([`74f1e99`](https://github.com/internetdata/mmdb/commit/74f1e991c5c6611134385f7406b2798edf9eb987))
+
 ## 1.7.0 - 2026-10-21
 
 ### Features
