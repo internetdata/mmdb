@@ -30,7 +30,8 @@ func printHelpDiff() {
 
 Description:
   Print subnet and record differences between two mmdb files (i.e. do set
-  difference `+"`"+"(new - old) U (old - new)"+"`"+`).
+  difference `+"`"+"(new - old) U (old - new)"+"`"+`). Subnet changes are sorted by the
+  old subnet, then the new; record changes by subnet.
 
 Options:
   General:
