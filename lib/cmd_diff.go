@@ -3,10 +3,13 @@
 package lib
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
+	"maps"
 	"net/netip"
 	"reflect"
+	"slices"
 
 	"github.com/oschwald/maxminddb-golang/v2"
 	"github.com/spf13/pflag"
@@ -47,19 +50,38 @@ type cmdDiffRecord struct {
 	newr interface{}
 }
 
+// diffCacheCap bounds each of diffRecords' caches; at the cap one starts over.
+var diffCacheCap = 1 << 16
+
+// diffRecords decodes each file's records once, by offset, and compares each
+// pair of offsets once: two files' offsets never compare directly.
+type diffRecords struct {
+	newRecs map[uintptr]interface{}
+	oldRecs map[uintptr]interface{}
+	equal   map[[2]uintptr]bool
+}
+
+func newDiffRecords() *diffRecords {
+	return &diffRecords{
+		newRecs: make(map[uintptr]interface{}),
+		oldRecs: make(map[uintptr]interface{}),
+		equal:   make(map[[2]uintptr]bool),
+	}
+}
+
+// doDiff walks newDb's networks and looks each up in oldDb. Records are only
+// compared when records is not nil.
 func doDiff(
 	newDb *maxminddb.Reader,
 	newDbStr string,
 	oldDb *maxminddb.Reader,
 	oldDbStr string,
+	records *diffRecords,
 ) (map[netip.Prefix]netip.Prefix, map[netip.Prefix]cmdDiffRecord, error) {
 	modifiedSubnets := map[netip.Prefix]netip.Prefix{}
 	modifiedRecords := map[netip.Prefix]cmdDiffRecord{}
 	for result := range newDb.Networks() {
-		var recordA interface{}
-		var recordB interface{}
-
-		if err := result.Decode(&recordA); err != nil {
+		if err := result.Err(); err != nil {
 			return nil, nil, fmt.Errorf(
 				"failed to get record for subnet from %v: %w",
 				newDbStr, err,
@@ -68,7 +90,7 @@ func doDiff(
 		subnetA := result.Prefix()
 
 		lookupResult := oldDb.Lookup(subnetA.Addr())
-		if err := lookupResult.Decode(&recordB); err != nil {
+		if err := lookupResult.Err(); err != nil {
 			return nil, nil, fmt.Errorf(
 				"failed to get record for IP %v from %v: %w",
 				subnetA.Addr(), oldDbStr, err,
@@ -81,9 +103,38 @@ func doDiff(
 			modifiedSubnets[subnetA] = subnetB
 			continue
 		}
+		if records == nil {
+			continue
+		}
 
 		// different data for same subnet?
-		if !reflect.DeepEqual(recordA, recordB) {
+		pair := [2]uintptr{result.Offset(), lookupResult.Offset()}
+		equal, known := records.equal[pair]
+		if known && equal {
+			continue
+		}
+		recordA, err := decodeCached(records.newRecs, result)
+		if err != nil {
+			return nil, nil, fmt.Errorf(
+				"failed to get record for subnet from %v: %w",
+				newDbStr, err,
+			)
+		}
+		recordB, err := decodeCached(records.oldRecs, lookupResult)
+		if err != nil {
+			return nil, nil, fmt.Errorf(
+				"failed to get record for IP %v from %v: %w",
+				subnetA.Addr(), oldDbStr, err,
+			)
+		}
+		if !known {
+			equal = reflect.DeepEqual(recordA, recordB)
+			if len(records.equal) >= diffCacheCap {
+				clear(records.equal)
+			}
+			records.equal[pair] = equal
+		}
+		if !equal {
 			modifiedRecords[subnetA] = cmdDiffRecord{
 				oldr: recordB,
 				newr: recordA,
@@ -92,6 +143,26 @@ func doDiff(
 	}
 
 	return modifiedSubnets, modifiedRecords, nil
+}
+
+// decodeCached decodes a result's record once per offset. A result that found
+// no record decodes to nil.
+func decodeCached(cache map[uintptr]interface{}, result maxminddb.Result) (interface{}, error) {
+	if !result.Found() {
+		return nil, nil
+	}
+	if record, ok := cache[result.Offset()]; ok {
+		return record, nil
+	}
+	var record interface{}
+	if err := result.Decode(&record); err != nil {
+		return nil, err
+	}
+	if len(cache) >= diffCacheCap {
+		clear(cache)
+	}
+	cache[result.Offset()] = record
+	return record, nil
 }
 
 func CmdDiff(f CmdDiffFlags, args []string, printHelp func()) error {
@@ -131,11 +202,11 @@ func CmdDiff(f CmdDiffFlags, args []string, printHelp func()) error {
 	}
 
 	// collect set difference data.
-	ambSn, ambRec, err := doDiff(newDb, newMmdb, oldDb, oldMmdb)
+	ambSn, ambRec, err := doDiff(newDb, newMmdb, oldDb, oldMmdb, newDiffRecords())
 	if err != nil {
 		return err
 	}
-	bmaSn, _, err := doDiff(oldDb, oldMmdb, newDb, newMmdb)
+	bmaSn, _, err := doDiff(oldDb, oldMmdb, newDb, newMmdb, nil)
 	if err != nil {
 		return err
 	}
@@ -144,11 +215,18 @@ func CmdDiff(f CmdDiffFlags, args []string, printHelp func()) error {
 	if f.Subnets {
 		if len(ambSn) > 0 || len(bmaSn) > 0 {
 			fmt.Println("** SUBNETS **")
+			changes := make([][2]netip.Prefix, 0, len(ambSn)+len(bmaSn))
 			for newSn, oldSn := range ambSn {
-				fmt.Printf("%v -> %v\n", oldSn, newSn)
+				changes = append(changes, [2]netip.Prefix{oldSn, newSn})
 			}
-			for newSn, oldSn := range bmaSn {
-				fmt.Printf("%v -> %v\n", newSn, oldSn)
+			for oldSn, newSn := range bmaSn {
+				changes = append(changes, [2]netip.Prefix{oldSn, newSn})
+			}
+			slices.SortFunc(changes, func(a, b [2]netip.Prefix) int {
+				return cmp.Or(a[0].Compare(b[0]), a[1].Compare(b[1]))
+			})
+			for _, sn := range changes {
+				fmt.Printf("%v -> %v\n", sn[0], sn[1])
 			}
 		}
 		fmt.Println(len(ambSn)+len(bmaSn), "subnet(s) modified.")
@@ -160,10 +238,10 @@ func CmdDiff(f CmdDiffFlags, args []string, printHelp func()) error {
 
 		if len(ambRec) > 0 {
 			fmt.Println("** RECORDS **")
-			for sn, diffRecord := range ambRec {
+			for _, sn := range slices.SortedFunc(maps.Keys(ambRec), netip.Prefix.Compare) {
 				fmt.Println(sn)
-				fmt.Printf("	-%v\n", diffRecord.oldr)
-				fmt.Printf("	+%v\n", diffRecord.newr)
+				fmt.Printf("	-%v\n", ambRec[sn].oldr)
+				fmt.Printf("	+%v\n", ambRec[sn].newr)
 			}
 		}
 		fmt.Println(len(ambRec), "record(s) modified.")
