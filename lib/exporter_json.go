@@ -17,8 +17,8 @@ type jsonExporter struct {
 	cache map[uintptr]jsonRecord
 }
 
-// jsonRecord is a record's JSON with an empty "range" where it sorts among the
-// keys, so each network's range is written at cut and no data is ever searched.
+// jsonRecord is a record's JSON with an empty value for one key where that key
+// sorts, so each line's own value is written at cut and no data is ever searched.
 type jsonRecord struct {
 	line []byte
 	cut  int
@@ -40,7 +40,7 @@ func (e *jsonExporter) WriteRecord(result maxminddb.Result) error {
 		if err := result.Decode(&record); err != nil {
 			return fmt.Errorf("failed to decode record: %w", err)
 		}
-		encoded, err := encodeJSONRecord(record)
+		encoded, err := encodeJSONRecord(record, "range")
 		if err != nil {
 			return fmt.Errorf("failed to encode record: %w", err)
 		}
@@ -59,13 +59,13 @@ func (e *jsonExporter) Flush() error {
 	return e.bw.Flush()
 }
 
-// encodeJSONRecord drops a "range" key of the record's own: the network's
-// range replaces it.
-func encodeJSONRecord(record map[string]any) (jsonRecord, error) {
-	delete(record, "range")
+// encodeJSONRecord cuts the record's JSON where key sorts. A key of the
+// record's own by that name is dropped: the value written at the cut replaces it.
+func encodeJSONRecord(record map[string]any, key string) (jsonRecord, error) {
+	delete(record, key)
 	before := make(map[string]any)
 	for k, v := range record {
-		if k < "range" {
+		if k < key {
 			before[k] = v
 			delete(record, k)
 		}
@@ -78,13 +78,18 @@ func encodeJSONRecord(record map[string]any) (jsonRecord, error) {
 	if err != nil {
 		return jsonRecord{}, err
 	}
+	keyStr, err := json.Marshal(key)
+	if err != nil {
+		return jsonRecord{}, err
+	}
 
-	line := make([]byte, 0, len(headObj)+len(`,"range":"",`)+len(tailObj))
+	line := make([]byte, 0, len(headObj)+len(keyStr)+len(`,:"",`)+len(tailObj))
 	line = append(line, headObj[:len(headObj)-1]...)
 	if len(before) > 0 {
 		line = append(line, ',')
 	}
-	line = append(line, `"range":"`...)
+	line = append(line, keyStr...)
+	line = append(line, `:"`...)
 	cut := len(line)
 	line = append(line, '"')
 	if len(record) > 0 {

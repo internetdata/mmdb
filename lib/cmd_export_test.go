@@ -319,7 +319,7 @@ func TestEncodeJSONRecord(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			rec, err := encodeJSONRecord(tc.record)
+			rec, err := encodeJSONRecord(tc.record, "range")
 			if err != nil {
 				t.Fatal(err)
 			}
