@@ -3,6 +3,7 @@
 package lib
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -23,6 +24,9 @@ var predictReadFmts = []string{
 	"tsv",
 	"csv",
 }
+
+// readCacheCap bounds the records read keeps; at the cap it starts over.
+var readCacheCap = 1 << 16
 
 // CmdReadFlags are flags expected by CmdRead.
 type CmdReadFlags struct {
@@ -99,12 +103,21 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 		wr = tsvwr
 	}
 
+	cache := make(map[uintptr]readRecord)
+	var row []string
+	var line []byte
+	var pretty bytes.Buffer
+
 	// Streamed rather than collected into a slice first: the arguments accepted
 	// here include CIDRs, and `mmdb read 0.0.0.0/0 db.mmdb` would otherwise try
 	// to hold 4.3 billion addresses before looking up the first one.
 	err = iputil.WalkAddrs(args[:len(args)-1], iputil.ListOpts, func(addr netip.Addr) error {
-		record := make(map[string]interface{})
-		if err := db.Lookup(addr.Unmap()).Decode(&record); err != nil || len(record) == 0 {
+		var rec readRecord
+		result := db.Lookup(addr.Unmap())
+		if result.Found() {
+			rec = cachedReadRecord(cache, result, requiresHdr)
+		}
+		if !rec.found {
 			if !requiresHdr {
 				fmt.Fprintf(os.Stderr,
 					"err: couldn't get data for %s\n",
@@ -114,17 +127,11 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 			return nil
 		}
 
-		if f.Format == "json-compact" || f.Format == "json-pretty" {
-			record["ip"] = addr
-		}
-
-		recordStr := mapInterfaceToStr(record)
-
 		if !hdrWritten {
 			hdrWritten = true
 
 			if requiresHdr {
-				hdr := append([]string{"ip"}, sortedMapKeys(recordStr)...)
+				hdr := append([]string{"ip"}, rec.keys...)
 				if err := wr.Write(hdr); err != nil {
 					return fmt.Errorf(
 						"failed to write header %v: %w",
@@ -134,32 +141,34 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 			}
 		}
 
-		if f.Format == "json-compact" {
-			b, err := json.Marshal(record)
-			if err != nil {
-				fmt.Fprintf(os.Stderr,
-					"err: couldn't print data for %s\n",
-					addr.String(),
-				)
-				return nil
+		if requiresHdr {
+			row = append(append(row[:0], addr.String()), rec.vals...)
+			if err := wr.Write(row); err != nil {
+				return fmt.Errorf("failed to write line %v: %w", row, err)
 			}
-			fmt.Printf("%s\n", b)
-		} else if f.Format == "json-pretty" {
-			b, err := json.MarshalIndent(record, "", "  ")
-			if err != nil {
-				fmt.Fprintf(os.Stderr,
-					"err: couldn't print data for %s\n",
-					addr.String(),
-				)
-				return nil
-			}
-			fmt.Printf("%s\n", b)
-		} else { // if fFormat == "csv" || fFormat == "tsv"
-			line := append([]string{addr.String()}, sortedMapValsByKeys(recordStr)...)
-			if err := wr.Write(line); err != nil {
-				return fmt.Errorf("failed to write line %v: %w", line, err)
-			}
+			return nil
 		}
+
+		if rec.jsonOK {
+			line = append(line[:0], rec.json.line[:rec.json.cut]...)
+			line = addr.AppendTo(line)
+			line = append(line, rec.json.line[rec.json.cut:]...)
+		}
+		if rec.jsonOK && f.Format == "json-pretty" {
+			pretty.Reset()
+			rec.jsonOK = json.Indent(&pretty, line, "", "  ") == nil
+			line = append(line[:0], pretty.Bytes()...)
+		}
+		if !rec.jsonOK {
+			fmt.Fprintf(os.Stderr,
+				"err: couldn't print data for %s\n",
+				addr.String(),
+			)
+			return nil
+		}
+		// One write per line, so a pipeline reading it gets each line as it is looked up.
+		line = append(line, '\n')
+		os.Stdout.Write(line)
 		return nil
 	})
 	if err != nil {
@@ -174,4 +183,42 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 	}
 
 	return nil
+}
+
+// readRecord is what read prints for one record, kept by its offset in the data
+// section, since a long list of addresses shares far fewer records.
+type readRecord struct {
+	found  bool
+	keys   []string
+	vals   []string
+	json   jsonRecord
+	jsonOK bool
+}
+
+func cachedReadRecord(cache map[uintptr]readRecord, result maxminddb.Result, flat bool) readRecord {
+	offset := result.Offset()
+	if rec, ok := cache[offset]; ok {
+		return rec
+	}
+	rec := newReadRecord(result, flat)
+	if len(cache) >= readCacheCap {
+		clear(cache)
+	}
+	cache[offset] = rec
+	return rec
+}
+
+// newReadRecord renders a record as CSV and TSV columns when flat, and as JSON
+// cut where "ip" sorts otherwise: the address looked up replaces any "ip" of its own.
+func newReadRecord(result maxminddb.Result, flat bool) readRecord {
+	record := make(map[string]any)
+	if err := result.Decode(&record); err != nil || len(record) == 0 {
+		return readRecord{}
+	}
+	if flat {
+		keys, vals := sortedMapKeysAndVals(mapInterfaceToStr(record))
+		return readRecord{found: true, keys: keys, vals: vals}
+	}
+	encoded, err := encodeJSONRecord(record, "ip")
+	return readRecord{found: true, json: encoded, jsonOK: err == nil}
 }

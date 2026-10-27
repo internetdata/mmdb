@@ -25,11 +25,6 @@ func sortedMapKeys(m map[string]string) []string {
 	return keys
 }
 
-func sortedMapValsByKeys(m map[string]string) []string {
-	_, vals := sortedMapKeysAndVals(m)
-	return vals
-}
-
 func sortedMapKeysAndVals(m map[string]string) ([]string, []string) {
 	keys := sortedMapKeys(m)
 	vals := make([]string, len(keys))
