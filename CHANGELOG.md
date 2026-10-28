@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.8.0 - 2026-10-28
+
+### Features
+
+- read: print each record from a cache, up to 10x faster on long lists ([`4df876d`](https://github.com/internetdata/mmdb/commit/4df876d60e2ce62773e0ec66220d3b6d87ae7315))
+- diff: decode each record once, and print changes sorted ([`bb05507`](https://github.com/internetdata/mmdb/commit/bb05507069956ff91a75824573c28c17f0ad5d32))
+
 ## 1.7.1 - 2026-10-26
 
 ### Fixes
