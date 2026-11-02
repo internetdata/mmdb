@@ -2,6 +2,16 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.9.0 - 2026-11-02
+
+### Features
+
+- import --json: keep each object's own keys ([`40ffa11`](https://github.com/internetdata/mmdb/commit/40ffa11adb2a36a8de5e73c86b720745971423ed))
+
+### Fixes
+
+- diff: print and count each subnet change once ([`b50ed93`](https://github.com/internetdata/mmdb/commit/b50ed93bd7711b6d698daed865778b3901ccba7c))
+
 ## 1.8.1 - 2026-11-02
 
 ### Fixes

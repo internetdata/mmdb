@@ -14,7 +14,7 @@ import (
 )
 
 // version is the release, set here and checked against the tag at release time.
-var version = "1.8.1"
+var version = "1.9.0"
 
 var progBase = filepath.Base(os.Args[0])
 
