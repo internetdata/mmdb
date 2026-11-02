@@ -422,7 +422,6 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 			return err
 		}
 
-		fieldsResolved := false
 		for n := 1; ; n++ {
 			if inArray && !dataStream.More() {
 				break
@@ -438,11 +437,6 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 			mResult, ok := row.(map[string]interface{})
 			if !ok {
 				return fmt.Errorf("record %d is not a JSON object", n)
-			}
-
-			if !fieldsResolved {
-				fieldsResolved = true
-				ParseJSONKeys(mResult, &f)
 			}
 
 			// convert 2 IPs into IP range?
@@ -623,31 +617,6 @@ func ParseCSVHeaders(parts []string, f *CmdImportFlags, dataColStart *int) {
 	}
 }
 
-func ParseJSONKeys(result map[string]interface{}, f *CmdImportFlags) {
-	if _, hasStartIp := result["start_ip"].(string); hasStartIp {
-		if _, hasEndIp := result["end_ip"].(string); hasEndIp {
-			f.RangeMultiCol = true
-
-			if _, hasJoinKey := result["join_key"].(string); hasJoinKey {
-				f.JoinKeyCol = true
-			}
-		}
-	}
-
-	// determine fields
-	// NOTE: even though there are no headers for JSON, we reuse that variable to signal the need to extract fields
-	if f.FieldsFromHdr {
-		for key := range result {
-			switch key {
-			case "start_ip", "end_ip", "join_key", "range":
-				continue
-			default:
-				f.Fields = append(f.Fields, key)
-			}
-		}
-	}
-}
-
 func AppendCSVRecord(f CmdImportFlags, dataColStart int, delim rune, parts []string, tree importTarget) error {
 	if startIP, err := iputil.AddrFromDecimal(parts[0], false); err == nil {
 		parts[0] = startIP.String()
@@ -718,8 +687,22 @@ func ProcessJsonData(
 	f CmdImportFlags,
 	subMap *mmdbtype.Map,
 ) error {
+	// JSON has no header line naming the fields once for every record: with no
+	// --fields, an object's fields are its own keys, other than its network's.
+	fields := f.Fields
+	if f.FieldsFromHdr {
+		fields = make([]string, 0, len(data))
+		for key := range data {
+			switch key {
+			case "start_ip", "end_ip", "join_key", "range":
+				continue
+			}
+			fields = append(fields, key)
+		}
+	}
+
 	// Insert each key-value pair into the map
-	for _, field := range f.Fields {
+	for _, field := range fields {
 		value, ok := data[field]
 		if !ok {
 			continue
