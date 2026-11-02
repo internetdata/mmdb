@@ -434,6 +434,69 @@ func TestCmdImport_JSONArray(t *testing.T) {
 	})
 }
 
+// TestCmdImport_JSONOwnKeys checks that with no --fields each JSON object keeps
+// its own keys, other than its network's, and that --fields still picks a
+// fixed set.
+func TestCmdImport_JSONOwnKeys(t *testing.T) {
+	jsonData := `{"range": "1.0.0.0/24", "a": "x"}
+{"range": "2.0.0.0/24", "a": "y", "b": "z"}
+{"start_ip": "3.0.0.0", "end_ip": "3.0.0.255", "join_key": "k", "c": {"d": true}}
+`
+	for _, tc := range []struct {
+		name   string
+		fields []string
+		want   map[string]string
+	}{
+		{"own keys", nil, map[string]string{
+			"1.0.0.1": "map[a:x]",
+			"2.0.0.1": "map[a:y b:z]",
+			"3.0.0.1": "map[c:map[d:true]]",
+		}},
+		{"--fields a", []string{"a"}, map[string]string{
+			"1.0.0.1": "map[a:x]",
+			"2.0.0.1": "map[a:y]",
+			"3.0.0.1": "map[]",
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			inputFile := filepath.Join(tempDir, "input.json")
+			outputFile := filepath.Join(tempDir, "output.mmdb")
+			if err := os.WriteFile(inputFile, []byte(jsonData), 0644); err != nil {
+				t.Fatal(err)
+			}
+
+			f := CmdImportFlags{
+				Ip:        6,
+				Merge:     "none",
+				In:        inputFile,
+				Out:       outputFile,
+				Json:      true,
+				Fields:    tc.fields,
+				NoNetwork: true,
+			}
+			if err := CmdImport(f, []string{}, func() {}); err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			db, err := maxminddb.Open(outputFile)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer db.Close()
+			for ip, want := range tc.want {
+				var record map[string]interface{}
+				if err := db.Lookup(netip.MustParseAddr(ip)).Decode(&record); err != nil {
+					t.Fatalf("%s: %s", ip, err)
+				}
+				if got := fmt.Sprint(record); got != want {
+					t.Errorf("%s: got %s, want %s", ip, got, want)
+				}
+			}
+		})
+	}
+}
+
 func TestCmdImport_MalformedJSON(t *testing.T) {
 	// An empty want takes any error: where an unclosed array is noticed
 	// depends on the Go release's decoder.

@@ -111,6 +111,7 @@ Options:
       default: N/A.
     --fields-from-header
       assume first line of input file is a header, and set the fields as that.
+      for JSON, each object's own keys are its fields.
       default: true if no other field source is used, false otherwise.
     --range-multicol
       assume that the network field is actually two columns start_ip,end_ip.
