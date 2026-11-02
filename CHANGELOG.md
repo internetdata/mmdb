@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.8.1 - 2026-11-02
+
+### Fixes
+
+- metadata: count --data-types value by value ([`4ee0f44`](https://github.com/internetdata/mmdb/commit/4ee0f443275bce0a04b15afae1616f23069ddec9))
+- Take maxminddb-golang 2.9.0 and libgo-iputil 1.1.4 ([`44d28e2`](https://github.com/internetdata/mmdb/commit/44d28e260d728dc8fba57002d48329351300a2cd))
+
 ## 1.8.0 - 2026-10-28
 
 ### Features
