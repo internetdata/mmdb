@@ -211,25 +211,29 @@ func CmdDiff(f CmdDiffFlags, args []string, printHelp func()) error {
 		return err
 	}
 
+	// a split or merged network is found from both files: keep each change
+	// once, as old -> new.
+	snChanges := make([][2]netip.Prefix, 0, len(ambSn)+len(bmaSn))
+	for newSn, oldSn := range ambSn {
+		snChanges = append(snChanges, [2]netip.Prefix{oldSn, newSn})
+	}
+	for oldSn, newSn := range bmaSn {
+		snChanges = append(snChanges, [2]netip.Prefix{oldSn, newSn})
+	}
+	slices.SortFunc(snChanges, func(a, b [2]netip.Prefix) int {
+		return cmp.Or(a[0].Compare(b[0]), a[1].Compare(b[1]))
+	})
+	snChanges = slices.Compact(snChanges)
+
 	// print.
 	if f.Subnets {
-		if len(ambSn) > 0 || len(bmaSn) > 0 {
+		if len(snChanges) > 0 {
 			fmt.Println("** SUBNETS **")
-			changes := make([][2]netip.Prefix, 0, len(ambSn)+len(bmaSn))
-			for newSn, oldSn := range ambSn {
-				changes = append(changes, [2]netip.Prefix{oldSn, newSn})
-			}
-			for oldSn, newSn := range bmaSn {
-				changes = append(changes, [2]netip.Prefix{oldSn, newSn})
-			}
-			slices.SortFunc(changes, func(a, b [2]netip.Prefix) int {
-				return cmp.Or(a[0].Compare(b[0]), a[1].Compare(b[1]))
-			})
-			for _, sn := range changes {
+			for _, sn := range snChanges {
 				fmt.Printf("%v -> %v\n", sn[0], sn[1])
 			}
 		}
-		fmt.Println(len(ambSn)+len(bmaSn), "subnet(s) modified.")
+		fmt.Println(len(snChanges), "subnet(s) modified.")
 	}
 	if f.Records {
 		if f.Subnets {
@@ -247,7 +251,7 @@ func CmdDiff(f CmdDiffFlags, args []string, printHelp func()) error {
 		fmt.Println(len(ambRec), "record(s) modified.")
 	}
 	if !f.Subnets && !f.Records {
-		fmt.Println(len(ambSn)+len(bmaSn), "subnet(s) modified.")
+		fmt.Println(len(snChanges), "subnet(s) modified.")
 		fmt.Println(len(ambRec), "record(s) modified.")
 	}
 

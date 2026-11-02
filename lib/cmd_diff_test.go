@@ -7,12 +7,14 @@ import (
 )
 
 // TestCmdDiff_Sorted diffs two small databases, with the caches kept and with
-// them starting over at every record, and checks the changes print sorted.
+// them starting over at every record, and checks the changes print sorted and
+// each once.
 func TestCmdDiff_Sorted(t *testing.T) {
 	tempDir := t.TempDir()
 	inputs := map[string]string{
-		"old": "network,v\n1.0.0.0/24,a\n2.0.0.0/23,b\n8.8.8.0/24,c\n9.9.9.0/24,d\n2001:db8::/32,e\n",
-		"new": "network,v\n1.0.0.0/24,a\n2.0.0.0/24,b\n2.0.1.0/24,b2\n3.0.0.0/24,f\n" +
+		"old": "network,v\n1.0.0.0/24,a\n2.0.0.0/23,b\n5.0.0.0/24,g\n5.0.1.0/24,h\n" +
+			"8.8.8.0/24,c\n9.9.9.0/24,d\n2001:db8::/32,e\n",
+		"new": "network,v\n1.0.0.0/24,a\n2.0.0.0/24,b\n2.0.1.0/24,b2\n3.0.0.0/24,f\n5.0.0.0/23,g\n" +
 			"8.8.8.0/24,C\n9.9.9.0/24,d\n2001:db8::/32,E\n",
 	}
 	for name, csv := range inputs {
@@ -34,13 +36,15 @@ func TestCmdDiff_Sorted(t *testing.T) {
 	}
 	args := []string{filepath.Join(tempDir, "old.mmdb"), filepath.Join(tempDir, "new.mmdb")}
 
-	// 2.0.0.0/23 -> 2.0.0.0/24 is seen from both files, and printed once for each.
+	// The split's 2.0.0.0/23 -> 2.0.0.0/24 and the merge's 5.0.0.0/24 ->
+	// 5.0.0.0/23 are each seen from both files, and printed and counted once.
 	want := `** SUBNETS **
-2.0.0.0/23 -> 2.0.0.0/24
 2.0.0.0/23 -> 2.0.0.0/24
 2.0.0.0/23 -> 2.0.1.0/24
 3.0.0.0/8 -> 3.0.0.0/24
-4 subnet(s) modified.
+5.0.0.0/24 -> 5.0.0.0/23
+5.0.1.0/24 -> 5.0.0.0/23
+5 subnet(s) modified.
 
 ** RECORDS **
 8.8.8.0/24
@@ -60,6 +64,12 @@ func TestCmdDiff_Sorted(t *testing.T) {
 				t.Fatalf("cache cap %d: got\n%s\nwant\n%s", cacheCap, got, want)
 			}
 		}
+	}
+
+	// With neither flag, only the counts print, the same ones.
+	got := diffStdout(t, CmdDiffFlags{}, args)
+	if want := "5 subnet(s) modified.\n2 record(s) modified.\n"; got != want {
+		t.Fatalf("got\n%s\nwant\n%s", got, want)
 	}
 }
 
