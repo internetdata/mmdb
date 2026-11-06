@@ -192,6 +192,46 @@ jobs:
           installers-regex: '_windows_\w+\.zip$'
           version: ${{ needs.version.outputs.version }}
           token: ${{ secrets.WINGET_TOKEN }}
+      # winget-pkgs labels Needs-CLA on every PR whose author's association is
+      # NONE, as this account's stayed through three merged PRs, and lifts it
+      # only for an agree its author posts after the label. komac exits 0 in CI
+      # on a version with an open PR, so a re-run answers that PR here.
+      - if: steps.guard.outputs.configured == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          BRANCH: InternetData.Mmdb-${{ needs.version.outputs.version }}-
+        run: |
+          set -euo pipefail
+          query='{ viewer { pullRequests(first: 20, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) { nodes { number headRefName repository { nameWithOwner } labels(first: 20) { nodes { name } } } } } }'
+          pick='[.data.viewer.pullRequests.nodes[] | select(.repository.nameWithOwner == "microsoft/winget-pkgs" and (.headRefName | startswith(env.BRANCH)))][0] // empty | "\(.number) \(any(.labels.nodes[]; .name == "Needs-CLA"))"'
+          pr='' cla=''
+          poll() {
+            read -r pr cla <<< "$(gh api graphql -f query="$query" --jq "$pick")"
+          }
+          for _ in $(seq 60) ; do
+            poll
+            if [ "$cla" = true ] ; then
+              break
+            fi
+            sleep 10
+          done
+          if [ "$cla" != true ] ; then
+            echo "::notice::No open PR for ${BRANCH%-} read Needs-CLA in 10 minutes${pr:+ (#$pr)}, so none needs an agree"
+            exit 0
+          fi
+          num="$pr"
+          gh pr comment "$num" --repo microsoft/winget-pkgs --body '@microsoft-github-policy-service agree'
+          for _ in $(seq 18) ; do
+            sleep 10
+            poll
+            if [ "$cla" = false ] ; then
+              echo "::notice::#$num agreed to the CLA, and its Needs-CLA is gone"
+              exit 0
+            fi
+          done
+          echo "::error::#$num still reads Needs-CLA 3 minutes after its agree"
+          exit 1
 
   chocolatey:
     needs: [version, release]
