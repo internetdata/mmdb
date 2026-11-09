@@ -121,6 +121,7 @@ func TestCompletion(t *testing.T) {
 		{"mmdb compress --backup ", ""},
 		{"mmdb import --csv --no-", "--no-fields\n--no-network\n"},
 		{"mmdb export --cidr-only --f", "--format\n"},
+		{"mmdb read --nocolor --no-", "--no-header\n"},
 	}
 	for _, tc := range tests {
 		stdout, stderr, code := runMainEnv(t, []string{"COMP_LINE=" + tc.line})

@@ -3,6 +3,7 @@
 package lib
 
 import (
+	"fmt"
 	"net"
 	"net/netip"
 	"os"
@@ -180,6 +181,7 @@ func TestCmdRead_CachedRecords(t *testing.T) {
 
 // TestCmdRead_ColumnsFollowHeader prints records with keys of their own under
 // the first record's columns: a key it lacks is empty, and one it has not is left out.
+// --no-header drops the header line alone, and leaves JSON as it is.
 func TestCmdRead_ColumnsFollowHeader(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "input.json")
@@ -212,18 +214,30 @@ func TestCmdRead_ColumnsFollowHeader(t *testing.T) {
 4.0.0.1,,
 1.0.0.2,x,w
 `
+	wantJSON := `{"a":"x","c":"w","ip":"1.0.0.1"}
+{"a":"y","b":"z","c":"v","ip":"2.0.0.1"}
+{"c":"u","ip":"3.0.0.1"}
+{"b":"t","ip":"4.0.0.1"}
+{"a":"x","c":"w","ip":"1.0.0.2"}
+`
+	_, wantCSVRows, _ := strings.Cut(wantCSV, "\n")
 	tests := []struct {
 		format string
+		noHdr  bool
 		want   string
 	}{
-		{"csv", wantCSV},
-		{"tsv", strings.ReplaceAll(wantCSV, ",", "\t")},
+		{"csv", false, wantCSV},
+		{"tsv", false, strings.ReplaceAll(wantCSV, ",", "\t")},
+		{"csv", true, wantCSVRows},
+		{"tsv", true, strings.ReplaceAll(wantCSVRows, ",", "\t")},
+		{"json", false, wantJSON},
+		{"json", true, wantJSON},
 	}
 	for _, tc := range tests {
-		t.Run(tc.format, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s no-header=%t", tc.format, tc.noHdr), func(t *testing.T) {
 			args := []string{"1.0.0.1", "2.0.0.1", "3.0.0.1", "4.0.0.1", "1.0.0.2", mmdbFile}
 			got := captureStdout(t, func() error {
-				return CmdRead(CmdReadFlags{Format: tc.format}, args, func() {})
+				return CmdRead(CmdReadFlags{Format: tc.format, NoHdr: tc.noHdr}, args, func() {})
 			})
 			if got != tc.want {
 				t.Errorf("got\n%s\nwant\n%s", got, tc.want)

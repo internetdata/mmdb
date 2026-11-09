@@ -32,6 +32,7 @@ var readCacheCap = 1 << 16
 type CmdReadFlags struct {
 	Help    bool
 	NoColor bool
+	NoHdr   bool
 	Format  string
 }
 
@@ -49,6 +50,11 @@ func (f *CmdReadFlags) Init() {
 	pflag.BoolVar(
 		&f.NoColor,
 		"nocolor", false,
+		_h,
+	)
+	pflag.BoolVar(
+		&f.NoHdr,
+		"no-header", false,
 		_h,
 	)
 	pflag.StringVarP(
@@ -93,7 +99,7 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 	defer db.Close()
 
 	requiresHdr := f.Format == "csv" || f.Format == "tsv"
-	hdrWritten := false
+	haveHdr := false
 	var hdrKeys []string
 	var wr writer
 	if f.Format == "csv" {
@@ -128,11 +134,11 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 			return nil
 		}
 
-		if !hdrWritten {
-			hdrWritten = true
-
-			if requiresHdr {
-				hdrKeys = rec.keys
+		// The first record found names the columns, with or without the header line.
+		if requiresHdr && !haveHdr {
+			haveHdr = true
+			hdrKeys = rec.keys
+			if !f.NoHdr {
 				hdr := append([]string{"ip"}, hdrKeys...)
 				if err := wr.Write(hdr); err != nil {
 					return fmt.Errorf(
