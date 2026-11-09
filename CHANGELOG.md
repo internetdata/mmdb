@@ -2,6 +2,12 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.9.1 - 2026-11-09
+
+### Fixes
+
+- read: print each csv and tsv value under its own column ([`1799118`](https://github.com/internetdata/mmdb/commit/1799118afe70db685ed4024093df825c07104f82))
+
 ## 1.9.0 - 2026-11-02
 
 ### Features
