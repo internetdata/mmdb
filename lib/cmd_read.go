@@ -94,6 +94,7 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 
 	requiresHdr := f.Format == "csv" || f.Format == "tsv"
 	hdrWritten := false
+	var hdrKeys []string
 	var wr writer
 	if f.Format == "csv" {
 		csvwr := csv.NewWriter(os.Stdout)
@@ -131,7 +132,8 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 			hdrWritten = true
 
 			if requiresHdr {
-				hdr := append([]string{"ip"}, rec.keys...)
+				hdrKeys = rec.keys
+				hdr := append([]string{"ip"}, hdrKeys...)
 				if err := wr.Write(hdr); err != nil {
 					return fmt.Errorf(
 						"failed to write header %v: %w",
@@ -142,7 +144,7 @@ func CmdRead(f CmdReadFlags, args []string, printHelp func()) error {
 		}
 
 		if requiresHdr {
-			row = append(append(row[:0], addr.String()), rec.vals...)
+			row = appendInHeaderOrder(append(row[:0], addr.String()), hdrKeys, rec)
 			if err := wr.Write(row); err != nil {
 				return fmt.Errorf("failed to write line %v: %w", row, err)
 			}
@@ -221,4 +223,22 @@ func newReadRecord(result maxminddb.Result, flat bool) readRecord {
 	}
 	encoded, err := encodeJSONRecord(record, "ip")
 	return readRecord{found: true, json: encoded, jsonOK: err == nil}
+}
+
+// appendInHeaderOrder appends rec's values under the header's keys, empty for a key rec lacks.
+// read streams, so the first record found names the columns, and a key outside them is left out,
+// as export leaves it. Both key lists are sorted.
+func appendInHeaderOrder(row, hdrKeys []string, rec readRecord) []string {
+	j := 0
+	for _, k := range hdrKeys {
+		for j < len(rec.keys) && rec.keys[j] < k {
+			j++
+		}
+		if j < len(rec.keys) && rec.keys[j] == k {
+			row = append(row, rec.vals[j])
+		} else {
+			row = append(row, "")
+		}
+	}
+	return row
 }

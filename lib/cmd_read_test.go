@@ -178,6 +178,60 @@ func TestCmdRead_CachedRecords(t *testing.T) {
 	}
 }
 
+// TestCmdRead_ColumnsFollowHeader prints records with keys of their own under
+// the first record's columns: a key it lacks is empty, and one it has not is left out.
+func TestCmdRead_ColumnsFollowHeader(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "input.json")
+	mmdbFile := filepath.Join(tempDir, "test.mmdb")
+
+	jsonData := `{"range": "1.0.0.0/24", "a": "x", "c": "w"}
+{"range": "2.0.0.0/24", "a": "y", "b": "z", "c": "v"}
+{"range": "3.0.0.0/24", "c": "u"}
+{"range": "4.0.0.0/24", "b": "t"}
+`
+	if err := os.WriteFile(inputFile, []byte(jsonData), 0644); err != nil {
+		t.Fatal(err)
+	}
+	err := CmdImport(CmdImportFlags{
+		Ip:        6,
+		Merge:     "none",
+		NoNetwork: true,
+		In:        inputFile,
+		Out:       mmdbFile,
+		Json:      true,
+	}, []string{}, func() {})
+	if err != nil {
+		t.Fatalf("import failed: %s", err)
+	}
+
+	wantCSV := `ip,a,c
+1.0.0.1,x,w
+2.0.0.1,y,v
+3.0.0.1,,u
+4.0.0.1,,
+1.0.0.2,x,w
+`
+	tests := []struct {
+		format string
+		want   string
+	}{
+		{"csv", wantCSV},
+		{"tsv", strings.ReplaceAll(wantCSV, ",", "\t")},
+	}
+	for _, tc := range tests {
+		t.Run(tc.format, func(t *testing.T) {
+			args := []string{"1.0.0.1", "2.0.0.1", "3.0.0.1", "4.0.0.1", "1.0.0.2", mmdbFile}
+			got := captureStdout(t, func() error {
+				return CmdRead(CmdReadFlags{Format: tc.format}, args, func() {})
+			})
+			if got != tc.want {
+				t.Errorf("got\n%s\nwant\n%s", got, tc.want)
+			}
+		})
+	}
+}
+
 // captureStdout runs fn with os.Stdout sent to a file, and returns what it wrote.
 func captureStdout(t *testing.T, fn func() error) string {
 	t.Helper()
