@@ -2,6 +2,12 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.10.0 - 2026-11-09
+
+### Features
+
+- read: add --no-header, as export has ([`0b47a55`](https://github.com/internetdata/mmdb/commit/0b47a551c5c025b2fd224727ea3445f05776b296))
+
 ## 1.9.1 - 2026-11-09
 
 ### Fixes
