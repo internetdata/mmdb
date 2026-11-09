@@ -46,6 +46,12 @@ curl -Ls https://github.com/internetdata/mmdb/releases/latest/download/deb.sh | 
 ### Windows
 
 ```powershell
+winget install InternetData.Mmdb
+```
+
+Or with Chocolatey:
+
+```powershell
 choco install mmdb
 ```
 
