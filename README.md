@@ -33,9 +33,13 @@ Homebrew won't load a formula from a third-party tap until you trust it. Skip th
 Install from our apt repository, which keeps `mmdb` up to date with `apt upgrade`:
 
 ```bash
-echo "deb [trusted=yes] https://apt.internetdata.io/mmdb/ /" | sudo tee /etc/apt/sources.list.d/mmdb.list
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://apt.internetdata.io/mmdb/public.key | sudo tee /etc/apt/keyrings/internetdata-mmdb.asc > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/internetdata-mmdb.asc] https://apt.internetdata.io/mmdb/ /" | sudo tee /etc/apt/sources.list.d/mmdb.list
 sudo apt update && sudo apt install mmdb
 ```
+
+The repository is signed by the key with fingerprint `590AB7732517F95B056ED35317EA110D248C1B73`, and apt refuses an index it did not sign. If you added the repository with `[trusted=yes]` before, replace that line with the one above: apt still installs from it, but warns on every update that it cannot check the signature.
 
 Or install a single `.deb` without the repository:
 
