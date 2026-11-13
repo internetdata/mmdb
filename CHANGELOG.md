@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.10.1 - 2026-11-13
+
+### Fixes
+
+- Take pflag v1.1.0: a 32-bit build refuses an int flag it cannot hold ([`136f939`](https://github.com/internetdata/mmdb/commit/136f93926cb1be31eba6871c8ff7ace93e89b3ec))
+- Build every release on Go 1.27.4 ([`d526a72`](https://github.com/internetdata/mmdb/commit/d526a726ef7fd1f47f4bdabeeea6b497163df410))
+
 ## 1.10.0 - 2026-11-09
 
 ### Features
