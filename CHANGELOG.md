@@ -2,6 +2,13 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.10.2 - 2026-11-16
+
+### Fixes
+
+- Take maxminddb-golang 2.9.1: export and diff list every network ([`5db7705`](https://github.com/internetdata/mmdb/commit/5db7705a35bfce66c708b1811a65a36451b1c529))
+- Take mmdbwriter v2 as of 2026-11-13 ([`f3e1453`](https://github.com/internetdata/mmdb/commit/f3e1453eeec44849cb5d136d7a2e48d50dbd6d27))
+
 ## 1.10.1 - 2026-11-13
 
 ### Fixes
