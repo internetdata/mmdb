@@ -465,6 +465,35 @@ func TestCmdExport_RangeColumn(t *testing.T) {
 	}
 }
 
+// TestCmdExport_SharedRecordAtZero exports an IPv6 database with no IPv4
+// subtree, whose ::/96 lies in a network sharing its record with another: up to
+// maxminddb-golang 2.9.0, that other network was left out.
+func TestCmdExport_SharedRecordAtZero(t *testing.T) {
+	tempDir := t.TempDir()
+	inputCSV := filepath.Join(tempDir, "shared.csv")
+	mmdbFile := filepath.Join(tempDir, "shared.mmdb")
+	outputFile := filepath.Join(tempDir, "output.csv")
+
+	input := "network,v\n::/8,A\n2a00::/16,A\n2b00::/16,B\n"
+	if err := os.WriteFile(inputCSV, []byte(input), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := importCSV(inputCSV, mmdbFile); err != nil {
+		t.Fatalf("failed to create MMDB: %s", err.Error())
+	}
+
+	f := CmdExportFlags{Format: "csv", Out: outputFile}
+	if err := CmdExport(f, []string{mmdbFile}, func() {}); err != nil {
+		t.Fatalf("unexpected error: %s", err.Error())
+	}
+
+	data := parseCSV(t, outputFile)
+	assertRowCount(t, data, 3)
+	assertCSVContains(t, data, map[string]string{"range": "::/8", "v": "A"})
+	assertCSVContains(t, data, map[string]string{"range": "2a00::/16", "v": "A"})
+	assertCSVContains(t, data, map[string]string{"range": "2b00::/16", "v": "B"})
+}
+
 func createTestMMDB(t *testing.T, outputPath string) {
 	t.Helper()
 

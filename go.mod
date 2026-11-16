@@ -7,8 +7,8 @@ require (
 	github.com/fatih/color v1.19.0
 	github.com/maxmind/mmdbwriter/v2 v2.0.0-20261113201352-347d5594b1a7
 	github.com/mslmio/libgo-complete v1.0.3
-	github.com/mslmio/libgo-iputil v1.1.4
-	github.com/oschwald/maxminddb-golang/v2 v2.9.0
+	github.com/mslmio/libgo-iputil v1.1.5
+	github.com/oschwald/maxminddb-golang/v2 v2.9.1
 	github.com/spf13/pflag v1.1.0
 	go4.org/netipx v0.0.0-20260823151212-3075585bcbeb
 )
@@ -16,5 +16,5 @@ require (
 require (
 	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 )
