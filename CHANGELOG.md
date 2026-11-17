@@ -2,6 +2,12 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.10.3 - 2026-11-17
+
+### Fixes
+
+- import: skip a leading UTF-8 byte order mark ([`da7f007`](https://github.com/internetdata/mmdb/commit/da7f007022a31f82ec1dc03650f74b5e4737ccef))
+
 ## 1.10.2 - 2026-11-16
 
 ### Fixes
