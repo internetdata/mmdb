@@ -345,6 +345,11 @@ func CmdImport(f CmdImportFlags, args []string, printHelp func()) error {
 
 	inFileBuffered := bufio.NewReaderSize(inFile, 65536)
 
+	// A UTF-8 byte order mark, as Windows tools write, is not part of the first record.
+	if b, _ := inFileBuffered.Peek(3); string(b) == "\xef\xbb\xbf" {
+		inFileBuffered.Discard(3)
+	}
+
 	entrycnt := 0
 	if delim == ',' || delim == '\t' {
 		var rdr reader

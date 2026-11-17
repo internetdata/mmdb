@@ -543,6 +543,91 @@ func TestCmdImport_MalformedJSON(t *testing.T) {
 	}
 }
 
+func TestCmdImport_ByteOrderMark(t *testing.T) {
+	const bom = "\xef\xbb\xbf"
+	for _, tc := range []struct {
+		name   string
+		f      CmdImportFlags
+		input  string
+		stdin  bool
+		want   string
+		errStr string
+	}{
+		{name: "headerless CSV", f: CmdImportFlags{Csv: true, Fields: []string{"country"}},
+			input: bom + "1.1.1.0/24,AU\n", want: "map[country:AU network:1.1.1.0/24]"},
+		{name: "a range header", f: CmdImportFlags{Csv: true},
+			input: bom + "start_ip,end_ip,country\n1.1.1.0,1.1.1.255,AU\n",
+			want:  "map[country:AU network:1.1.1.0-1.1.1.255]"},
+		{name: "headerless TSV", f: CmdImportFlags{Tsv: true, Fields: []string{"country"}},
+			input: bom + "1.1.1.0/24\tAU\n", want: "map[country:AU network:1.1.1.0/24]"},
+		{name: "JSON objects", f: CmdImportFlags{Json: true},
+			input: bom + `{"range": "1.1.1.0/24", "country": "AU"}` + "\n",
+			want:  "map[country:AU network:1.1.1.0/24]"},
+		{name: "a JSON array", f: CmdImportFlags{Json: true},
+			input: bom + `[{"range": "1.1.1.0/24", "country": "AU"}]` + "\n",
+			want:  "map[country:AU network:1.1.1.0/24]"},
+		{name: "stdin", f: CmdImportFlags{Csv: true, Fields: []string{"country"}}, stdin: true,
+			input: bom + "1.1.1.0/24,AU\n", want: "map[country:AU network:1.1.1.0/24]"},
+		{name: "only the first", f: CmdImportFlags{Csv: true, Fields: []string{"country"}},
+			input: bom + bom + "1.1.1.0/24,AU\n", errStr: "couldn't parse cidr"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			outputFile := filepath.Join(tempDir, "output.mmdb")
+			f := tc.f
+			f.Ip = 6
+			f.Merge = "none"
+			f.Out = outputFile
+			if tc.stdin {
+				r, w, err := os.Pipe()
+				if err != nil {
+					t.Fatal(err)
+				}
+				stdin := os.Stdin
+				os.Stdin = r
+				defer func() {
+					os.Stdin = stdin
+					r.Close()
+				}()
+				go func() {
+					w.WriteString(tc.input)
+					w.Close()
+				}()
+				f.In = "-"
+			} else {
+				f.In = filepath.Join(tempDir, "input")
+				if err := os.WriteFile(f.In, []byte(tc.input), 0644); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			err := CmdImport(f, []string{}, func() {})
+			if tc.errStr != "" {
+				if err == nil || !strings.Contains(err.Error(), tc.errStr) {
+					t.Errorf("got %v, want an error containing %q", err, tc.errStr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			db, err := maxminddb.Open(outputFile)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer db.Close()
+			var record map[string]interface{}
+			if err := db.Lookup(netip.MustParseAddr("1.1.1.1")).Decode(&record); err != nil {
+				t.Fatal(err)
+			}
+			if got := fmt.Sprint(record); got != tc.want {
+				t.Errorf("got %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestCmdImport_IPRangeWithContent(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "input.csv")
