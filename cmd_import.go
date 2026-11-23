@@ -164,7 +164,7 @@ Options:
 func cmdImport() error {
 	f := mmdbLib.CmdImportFlags{}
 	f.Init()
-	pflag.Parse()
+	parseFlags("import")
 
 	return mmdbLib.CmdImport(f, pflag.Args()[1:], printHelpImport)
 }

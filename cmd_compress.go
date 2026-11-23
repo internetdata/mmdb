@@ -47,7 +47,7 @@ Options:
 func cmdCompress() error {
 	f := mmdbLib.CmdCompressFlags{}
 	f.Init()
-	pflag.Parse()
+	parseFlags("compress")
 
 	return mmdbLib.CmdCompress(f, pflag.Args()[1:], printHelpCompress)
 }

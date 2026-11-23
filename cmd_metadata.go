@@ -50,7 +50,7 @@ Options:
 func cmdMetadata() error {
 	f := mmdbLib.CmdMetadataFlags{}
 	f.Init()
-	pflag.Parse()
+	parseFlags("metadata")
 
 	return mmdbLib.CmdMetadata(f, pflag.Args()[1:], printHelpMetadata)
 }

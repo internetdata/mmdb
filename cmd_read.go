@@ -58,7 +58,7 @@ Options:
 func cmdRead() error {
 	f := mmdbLib.CmdReadFlags{}
 	f.Init()
-	pflag.Parse()
+	parseFlags("read")
 
 	return mmdbLib.CmdRead(f, pflag.Args()[1:], printHelpRead)
 }
