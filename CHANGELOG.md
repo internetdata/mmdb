@@ -2,6 +2,12 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.10.4 - 2026-11-23
+
+### Fixes
+
+- completion: -h and --help print its help ([`a6de4a1`](https://github.com/internetdata/mmdb/commit/a6de4a1b64cd4747de73f74738816843fddd9375))
+
 ## 1.10.3 - 2026-11-17
 
 ### Fixes
