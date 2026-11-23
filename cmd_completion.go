@@ -61,7 +61,7 @@ Options:
 
 func cmdCompletion() error {
 	pflag.BoolVarP(&fHelp, "help", "h", false, "show help.")
-	pflag.Parse()
+	parseFlags("completion")
 
 	args := pflag.Args()[1:]
 	if fHelp || len(args) == 0 || len(args) > 1 {

@@ -11,6 +11,7 @@ import (
 	mmdbLib "github.com/internetdata/mmdb/lib"
 
 	"github.com/fatih/color"
+	"github.com/spf13/pflag"
 )
 
 // version is the release, set here and checked against the tag at release time.
@@ -32,6 +33,9 @@ func main() {
 	}
 
 	handleCompletions()
+
+	// parseFlags prints a flag error, never pflag's list of every flag.
+	pflag.CommandLine.Init(progBase, pflag.ContinueOnError)
 
 	if len(os.Args) > 1 {
 		cmd = os.Args[1]
@@ -66,4 +70,19 @@ func main() {
 		}
 		os.Exit(1)
 	}
+}
+
+// parseFlags parses the command line, and on a bad flag prints the error and
+// where cmd's help is, then exits 2; cmd is empty for the general help.
+func parseFlags(cmd string) {
+	err := pflag.CommandLine.Parse(os.Args[1:])
+	if err == nil {
+		return
+	}
+	help := progBase + " --help"
+	if cmd != "" {
+		help = progBase + " " + cmd + " --help"
+	}
+	fmt.Fprintf(os.Stderr, "err: %v\nsee '%s'\n", err, help)
+	os.Exit(2)
 }

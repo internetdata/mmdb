@@ -102,7 +102,6 @@ func TestExitStatus(t *testing.T) {
 			1, "err: bogus is not a valid subcommand\n", ""},
 		{"import with an empty backup suffix", []string{"import", "--csv", "--backup", "", csvPath, db},
 			1, "", "err: --backup needs a suffix, such as .bak\n"},
-		{"an unknown flag", []string{"verify", "--bogus", db}, 2, "", "Usage of "},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -117,6 +116,42 @@ func TestExitStatus(t *testing.T) {
 				t.Errorf("stderr %q, want it to start with %q", stderr, tc.stderr)
 			}
 		})
+	}
+}
+
+// TestFlagError pins that a bad flag prints the error and where the help is,
+// with exit 2, in place of pflag's list of every flag before the error.
+func TestFlagError(t *testing.T) {
+	type flagCase struct {
+		args []string
+		cmd  string
+		err  string
+	}
+	tests := []flagCase{
+		{[]string{"--bogus"}, "", "unknown flag: --bogus"},
+		{[]string{"bogus", "-x"}, "", "unknown shorthand flag: 'x' in -x"},
+		{[]string{"import", "--in"}, "import", "flag needs an argument: --in"},
+		{[]string{"import", "--size", "abc"}, "import",
+			`invalid argument "abc" for "-s, --size" flag: record size must be auto, 24, 28 or 32`},
+		{[]string{"read", "--nocolor=maybe", "8.8.8.8"}, "read",
+			`invalid argument "maybe" for "--nocolor" flag: must be true or false`},
+	}
+	cmds := []string{"read", "import", "export", "diff", "verify", "metadata", "compress", "completion"}
+	for _, cmd := range cmds {
+		tests = append(tests, flagCase{[]string{cmd, "--bogus", "a.mmdb"}, cmd, "unknown flag: --bogus"})
+	}
+	prog := filepath.Base(os.Args[0])
+	for _, tc := range tests {
+		help := prog + " --help"
+		if tc.cmd != "" {
+			help = prog + " " + tc.cmd + " --help"
+		}
+		want := "err: " + tc.err + "\nsee '" + help + "'\n"
+		stdout, stderr, code := runMain(t, tc.args...)
+		if code != 2 || stdout != "" || stderr != want {
+			t.Errorf("%v: exit %d, stdout %q, stderr %q; want exit 2 and stderr %q",
+				tc.args, code, stdout, stderr, want)
+		}
 	}
 }
 

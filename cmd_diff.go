@@ -47,7 +47,7 @@ Options:
 func cmdDiff() error {
 	f := mmdbLib.CmdDiffFlags{}
 	f.Init()
-	pflag.Parse()
+	parseFlags("diff")
 
 	return mmdbLib.CmdDiff(f, pflag.Args()[1:], printHelpDiff)
 }

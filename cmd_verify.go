@@ -34,7 +34,7 @@ Options:
 func cmdVerify() error {
 	f := mmdbLib.CmdVerifyFlags{}
 	f.Init()
-	pflag.Parse()
+	parseFlags("verify")
 
 	return mmdbLib.CmdVerify(f, pflag.Args()[1:], printHelpVerify)
 }

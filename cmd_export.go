@@ -61,7 +61,7 @@ Options:
 func cmdExport() error {
 	f := mmdbLib.CmdExportFlags{}
 	f.Init()
-	pflag.Parse()
+	parseFlags("export")
 
 	return mmdbLib.CmdExport(f, pflag.Args()[1:], printHelpExport)
 }
