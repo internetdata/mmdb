@@ -29,6 +29,22 @@ func TestReadWithNoFilePrintsHelp(t *testing.T) {
 	}
 }
 
+// TestHelpFlag pins that -h and --help print the command's own help, which
+// completion's never did: it printed an empty flag list.
+func TestHelpFlag(t *testing.T) {
+	cmds := []string{"read", "import", "export", "diff", "verify", "metadata", "compress", "completion"}
+	for _, cmd := range cmds {
+		for _, flag := range []string{"-h", "--help"} {
+			stdout, stderr, code := runMain(t, cmd, flag)
+			want := " " + cmd + " [<opts>]"
+			if code != 0 || !strings.HasPrefix(stdout, "Usage: ") || !strings.Contains(stdout, want) ||
+				stderr != "" {
+				t.Errorf("%s %s: exit %d, stdout %q, stderr %q; want its help", cmd, flag, code, stdout, stderr)
+			}
+		}
+	}
+}
+
 // TestReadListWithByteOrderMark pins that a list starting with a UTF-8 byte
 // order mark, as Excel's CSV UTF-8 export writes, keeps its first address.
 func TestReadListWithByteOrderMark(t *testing.T) {

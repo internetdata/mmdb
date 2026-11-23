@@ -60,6 +60,7 @@ Options:
 }
 
 func cmdCompletion() error {
+	pflag.BoolVarP(&fHelp, "help", "h", false, "show help.")
 	pflag.Parse()
 
 	args := pflag.Args()[1:]
