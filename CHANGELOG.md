@@ -2,6 +2,12 @@
 
 What each release changed for you, newest first. Each line is a commit's summary, linked to its full description and diff. 1.0.0, the first release, is described by the commits up to its tag.
 
+## 1.11.0 - 2026-11-23
+
+### Features
+
+- Print a flag error and where the help is, not every flag ([`f7aa6a5`](https://github.com/internetdata/mmdb/commit/f7aa6a56bb4041675e72c1a599082d2a1fd0a995))
+
 ## 1.10.4 - 2026-11-23
 
 ### Fixes
