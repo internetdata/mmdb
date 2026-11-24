@@ -14,6 +14,8 @@ With it you can:
 - Print the metadata of an MMDB file.
 - Check that an MMDB file is not corrupted or invalid.
 
+![mmdb reading an address and a range from an MMDB file, then building an MMDB from a CSV and reading it back](https://raw.githubusercontent.com/internetdata/mmdb/main/assets/demo.gif)
+
 ## Getting Started
 
 ### macOS
